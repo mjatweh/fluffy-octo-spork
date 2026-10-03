@@ -55,3 +55,41 @@ def test_single_group_has_no_section_headings(config, day):
     data.emails = normalize_emails([mail("x@y.com", group="Inbox")])
     assert '<h3 class="group">' not in render_html(data, template_briefing(data))
     assert template_briefing(data).emails_to_reply == ["x@y.com: Can you review?"]
+
+
+def test_fyi_mail_never_needs_reply_unless_direct_question():
+    cc_only = mail("ops@jlmaf.com", "Can you confirm the shipment?", direct=False)
+    unknown = mail("ops@jlmaf.com", "Can you confirm the shipment?")
+    direct_q = mail("dan@jlmaf.com", "Can you approve the PO?", direct=True)
+    direct_note = mail("dan@jlmaf.com", "Weekly production numbers", direct=True)
+    batch = [cc_only, unknown, direct_q, direct_note]
+    tag_emails(batch, {"group": "Personal", "fyi_domains": ["jlmaf.com"],
+                       "work_reply_from": "me@company.com", "work_domains": ["jlmaf.com"]}, "Gmail")
+    assert all(m.fyi for m in batch)
+    normalize_emails(batch)
+    assert [m.needs_reply for m in batch] == [False, False, True, False]
+
+
+def test_fyi_digest_in_briefing_and_dashboard(config, day):
+    data = DayData(day=day, generated_at=T0.replace(tzinfo=config.tz))
+    fyi = mail("Dan <dan@jlmaf.com>", "Can you see the shipment update?", group="Personal", fyi=True,
+               direct=False, reply_from="me@company.com")
+    ask = mail("Charles <c@family.com>", "Can you call the bank?", group="Personal", reply_from="me@company.com")
+    data.emails = normalize_emails([fyi, ask])
+    b = template_briefing(data)
+    assert b.emails_to_reply == ["Charles: Can you call the bank? (reply from me@company.com)"]
+    assert b.fyi == ["Dan: Can you see the shipment update?"]  # no reply nudge on FYI lines
+    html = render_html(data, b)
+    assert "FYI (1):</strong> Dan: Can you see the shipment update?" in html
+    assert html.count("Reply from me@company.com") == 1  # only the real ask
+
+
+def test_imap_direct_detection():
+    from life_dashboard.connectors.imap import parse_message
+
+    raw = (b"From: Dan <dan@jlmaf.com>\r\nTo: Team <team@jlmaf.com>\r\nCc: me@gmail.com\r\n"
+           b"Subject: Update\r\nDate: Mon, 05 Oct 2026 08:00:00 -0400\r\n\r\nbody")
+    assert parse_message(raw, b"", "Gmail", None, me="ME@gmail.com").direct is False
+    raw_to = raw.replace(b"To: Team <team@jlmaf.com>", b"To: Me <me@gmail.com>, team@jlmaf.com")
+    assert parse_message(raw_to, b"", "Gmail", None, me="me@gmail.com").direct is True
+    assert parse_message(raw, b"", "Gmail", None).direct is None

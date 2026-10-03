@@ -23,10 +23,12 @@ BRIEFING_SCHEMA: dict[str, Any] = {
         "top_priorities": _LIST,
         "schedule_highlights": _LIST,
         "emails_to_reply": _LIST,
+        "fyi": _LIST,
         "risks": _LIST,
         "focus_tip": {"type": "string"},
     },
-    "required": ["headline", "summary", "top_priorities", "schedule_highlights", "emails_to_reply", "risks", "focus_tip"],
+    "required": ["headline", "summary", "top_priorities", "schedule_highlights", "emails_to_reply", "fyi", "risks",
+                 "focus_tip"],
     "additionalProperties": False,
 }
 
@@ -48,6 +50,10 @@ absorb in under a minute:
   work that arrived in a personal inbox: end its entry with "(reply from <reply_from>)" so the
   sender learns the right address. Also add that note to other emails in an inbox whose
   siblings carry reply_from when they are clearly work for the same organization.
+  Emails marked "fyi" are ones the reader is only copied on for visibility: never put them in
+  emails_to_reply unless needs_reply is true.
+- fyi: a short digest of the "fyi" emails, at most 5 entries, each one line saying what happened
+  (e.g. "[Work] JLMAF: shipment to Acme delayed to Friday"). Empty list if there are none.
 - risks: scheduling conflicts, back-to-back meetings with no break, overdue items, deadlines at
   risk, and data sources that failed to load. Empty list if there are none.
 - focus_tip: one practical suggestion for how to approach the day.
@@ -65,7 +71,7 @@ def _email_line(m, grouped: bool) -> str:
     line = f"{m.sender.split('<')[0].strip()}: {m.subject}"
     if grouped and m.group:
         line = f"[{m.group}] {line}"
-    return line + (f" (reply from {m.reply_from})" if m.reply_from else "")
+    return line + (f" (reply from {m.reply_from})" if m.reply_from and m.needs_reply else "")
 
 
 def template_briefing(data: DayData) -> Briefing:
@@ -110,6 +116,7 @@ def template_briefing(data: DayData) -> Briefing:
         top_priorities=[f"{t.title}" + (" (overdue)" if t.overdue else " (due today)" if t.due_today else "") for t in urgent[:5]],
         schedule_highlights=[f"{_t(e)} {e.title}" + (f" @ {e.location}" if e.location else "") for e in data.events],
         emails_to_reply=[_email_line(m, len(data.email_groups) > 1) for m in data.needs_reply],
+        fyi=[_email_line(m, len(data.email_groups) > 1) for m in data.emails if m.fyi and not m.needs_reply][:5],
         risks=risks,
         focus_tip=focus,
         generated_by="template",

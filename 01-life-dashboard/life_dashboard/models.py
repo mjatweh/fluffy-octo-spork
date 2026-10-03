@@ -46,6 +46,8 @@ class Email:
     source: str = ""
     group: str = ""  # inbox section, e.g. "Work" / "Personal" (connector option `group`)
     reply_from: str = ""  # set when work mail lands in a personal inbox: the address to answer from
+    fyi: bool = False  # from a sender you're only copied on for visibility (connector option `fyi_domains`)
+    direct: bool | None = None  # True if you're in To (not just Cc); None when the source can't tell
 
 
 PRIORITY_LABELS = {1: "urgent", 2: "high", 3: "normal", 4: "low"}
@@ -85,6 +87,7 @@ class Briefing:
     top_priorities: list[str] = field(default_factory=list)
     schedule_highlights: list[str] = field(default_factory=list)
     emails_to_reply: list[str] = field(default_factory=list)
+    fyi: list[str] = field(default_factory=list)
     risks: list[str] = field(default_factory=list)
     focus_tip: str = ""
     generated_by: str = "template"  # "template" or the model id

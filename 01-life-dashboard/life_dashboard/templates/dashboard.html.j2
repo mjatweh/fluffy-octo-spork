@@ -85,6 +85,7 @@ footer{color:var(--muted);font-size:12px;margin-top:20px;text-align:center}
         <h3>Emails to reply to</h3>
         {% if b.emails_to_reply %}<ul>{% for e in b.emails_to_reply %}<li>{{ e }}</li>{% endfor %}</ul>
         {% else %}<p class="empty">Inbox is calm.</p>{% endif %}
+        {% if b.fyi %}<h3>FYI</h3><ul>{% for f in b.fyi %}<li>{{ f }}</li>{% endfor %}</ul>{% endif %}
       </div>
       <div>
         <h3>Schedule</h3>
@@ -119,16 +120,18 @@ footer{color:var(--muted);font-size:12px;margin-top:20px;text-align:center}
     {% set groups = d.email_groups %}
     {% for group, mails in groups %}
     {% if groups|length > 1 %}<h3 class="group">{{ group }} <span class="count">{{ mails|selectattr('needs_reply')|list|length }} need reply</span></h3>{% endif %}
+    {% set fyi = mails|selectattr('fyi')|rejectattr('needs_reply')|list %}
     <ul class="list">
-    {% for m in mails %}
+    {% for m in mails if m not in fyi %}
       <li>
         <span><span class="title">{{ m.subject }}</span>{% if m.needs_reply %}<span class="pill warn">reply</span>{% endif %}{% if m.flagged %}<span class="pill acc">flagged</span>{% endif %}{% if m.reply_from %}<span class="pill acc" title="Work mail in a personal inbox">work</span>{% endif %}
         <br><span class="meta">{{ m.sender }} · {{ m.received.strftime('%a %H:%M') }}</span>
-        {% if m.reply_from %}<br><span class="meta">Reply from {{ m.reply_from }} so they switch to it</span>{% endif %}
+        {% if m.reply_from and m.needs_reply %}<br><span class="meta">Reply from {{ m.reply_from }} so they switch to it</span>{% endif %}
         {% if m.snippet %}<br><span class="meta">{{ m.snippet|truncate(120) }}</span>{% endif %}</span>
       </li>
     {% endfor %}
     </ul>
+    {% if fyi %}<p class="meta fyi"><strong>FYI ({{ fyi|length }}):</strong> {% for m in fyi %}{{ m.sender.split('<')[0].strip() }}: {{ m.subject }}{% if not loop.last %} · {% endif %}{% endfor %}</p>{% endif %}
     {% endfor %}
     {% else %}<p class="empty">No new email.</p>{% endif %}
   </section>

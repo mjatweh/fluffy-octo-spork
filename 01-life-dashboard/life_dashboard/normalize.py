@@ -34,6 +34,8 @@ def normalize_events(events: list[Event]) -> list[Event]:
 def needs_reply(mail: Email) -> bool:
     if AUTOMATED_SENDER.search(mail.sender):
         return False
+    if mail.fyi:  # copied for visibility: only a direct question to you needs an answer
+        return bool(mail.direct) and bool(REPLY_HINT.search(f"{mail.subject} {mail.snippet}"))
     if mail.flagged:
         return True
     return mail.unread and bool(REPLY_HINT.search(f"{mail.subject} {mail.snippet}"))
@@ -48,18 +50,30 @@ def tag_emails(emails: list[Email], options: dict, default_group: str) -> None:
     """Apply an email connector's ``group`` and work-routing options to its messages.
 
     ``work_reply_from``: the address work should come from (e.g. your company email);
-    ``work_domains`` / ``work_senders``: senders whose mail counts as work in this inbox.
+    ``work_domains`` / ``work_senders``: senders whose mail counts as work in this inbox;
+    ``fyi_domains`` / ``fyi_senders``: senders you're only copied on, summarized as FYI.
     """
     group = str(options.get("group") or default_group)
     reply_from = str(options.get("work_reply_from") or "")
-    domains = {str(d).lower().lstrip("@") for d in options.get("work_domains", [])}
-    senders = {str(s).lower() for s in options.get("work_senders", [])}
+    is_work = _matcher(options.get("work_domains", []), options.get("work_senders", []))
+    is_fyi = _matcher(options.get("fyi_domains", []), options.get("fyi_senders", []))
     for m in emails:
         m.group = group
         addr = sender_address(m)
-        domain = addr.rpartition("@")[2]
-        if reply_from and (addr in senders or any(domain == d or domain.endswith("." + d) for d in domains)):
+        m.fyi = is_fyi(addr)
+        if reply_from and is_work(addr):
             m.reply_from = reply_from
+
+
+def _matcher(domains, senders):
+    domains = {str(d).lower().lstrip("@") for d in domains}
+    senders = {str(s).lower() for s in senders}
+
+    def match(addr: str) -> bool:
+        domain = addr.rpartition("@")[2]
+        return addr in senders or any(domain == d or domain.endswith("." + d) for d in domains)
+
+    return match
 
 
 def normalize_emails(emails: list[Email], limit: int = 8) -> list[Email]:

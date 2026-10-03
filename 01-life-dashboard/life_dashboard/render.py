@@ -27,6 +27,8 @@ def render_markdown(data: DayData, b: Briefing) -> str:
     lines += section("Top priorities", [f"{i}" for i in b.top_priorities])
     lines += section("Schedule", b.schedule_highlights)
     lines += section("Emails to reply to", b.emails_to_reply)
+    if b.fyi:
+        lines += section("FYI", b.fyi)
     lines += section("Risks & conflicts", b.risks)
     if b.focus_tip:
         lines += ["## Focus tip", b.focus_tip, ""]

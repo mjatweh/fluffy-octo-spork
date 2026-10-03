@@ -90,7 +90,7 @@ down) it shows red in **Connected tools**, Claude is told it's unavailable, and 
 | `type` | Kind | Options | Notes |
 |---|---|---|---|
 | `ics` | calendar | `source` (path, `https://` or `webcal://`) | Google, Outlook and iCloud all publish a private iCal URL, so no OAuth is needed. Handles TZID/UTC/floating times, all-day and multi-day events, RRULE (DAILY/WEEKLY/MONTHLY/YEARLY, INTERVAL, BYDAY, UNTIL, COUNT), EXDATE, RECURRENCE-ID overrides and cancelled events. |
-| *(any email connector)* | email | `group`, `work_reply_from`, `work_domains`, `work_senders` | See "Inbox groups and work routing" below. |
+| *(any email connector)* | email | `group`, `work_reply_from`, `work_domains`, `work_senders`, `fyi_domains`, `fyi_senders` | See "Inbox groups and work routing" below. |
 | `imap` | email | `host`, `username`, `password_env`, `mailbox`, `days`, `unread_only`, `limit`, `port` | Stdlib `imaplib`, read-only (`BODY.PEEK`, so nothing gets marked as read). For Gmail, use an App Password. |
 | `outlook` | email | `client_id` (or `client_id_env`), `tenant`, `folder`, `days`, `unread_only`, `limit`, `token_cache` | Outlook.com and Microsoft 365 through Microsoft Graph. Microsoft no longer accepts app passwords over IMAP, so this signs in once in the browser (see below). Read-only (`Mail.Read`). |
 | `outlook_calendar` | calendar | same sign-in options as `outlook`, plus `calendar_id` | Your Microsoft 365 / Outlook.com calendar through Graph, with Teams **Join** links. Shares the `outlook` sign-in when both have the same `account`. Read-only (`Calendars.Read`). |
@@ -119,6 +119,7 @@ Every email connector accepts these extra options:
 |---|---|
 | `group` | The section the inbox appears under on the dashboard and in the briefing, e.g. `"Work"`, `"Client"`, `"Personal"`. Defaults to the connector name. Sections follow the order of the connectors in your config, and `max_emails` applies to each section. |
 | `work_reply_from` | For a personal inbox that still receives work mail: the address work should come from. |
+| `fyi_domains`, `fyi_senders` | Senders you're only copied on for visibility. Their mail goes into a one-line **FYI** digest instead of the reply list, unless it's addressed to you directly (you're in To, not just Cc) and asks something. The To/Cc check works for IMAP inboxes; for other sources FYI mail never counts as needing a reply. |
 | `work_domains`, `work_senders` | Senders whose mail in that inbox counts as work. It gets a **work** pill and a "Reply from …" nudge, so people learn your work address. Claude also points out other mail that's clearly work. |
 
 ```toml
@@ -131,6 +132,7 @@ username = "you@gmail.com"
 password_env = "GMAIL_APP_PASSWORD"
 work_reply_from = "you@company.com"
 work_domains = ["company.com", "bigclient.com"]
+fyi_domains = ["subsidiary.com"]        # copied for visibility: FYI digest, not the reply list
 ```
 
 ### Outlook / Microsoft 365 email and calendar
