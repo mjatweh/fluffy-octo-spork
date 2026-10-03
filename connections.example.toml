@@ -73,8 +73,18 @@ username = "you@yahoo.com"
 password_env = "YAHOO_APP_PASSWORD"
 enabled = false
 
-# Outlook.com / Microsoft 365 mail is NOT supported yet: Microsoft no longer
-# allows app passwords over IMAP (OAuth only). Calendars above work fine.
+# Outlook.com / Microsoft 365: Microsoft no longer accepts app passwords, so this
+# signs in through the browser once. Register a free app first (01-life-dashboard/README.md →
+# "Outlook / Microsoft 365 email"), put its Application (client) ID in .env as
+# OUTLOOK_CLIENT_ID, then run:  cd 01-life-dashboard && python -m life_dashboard auth
+[[connectors]]
+type = "outlook"
+name = "Outlook"
+client_id_env = "OUTLOOK_CLIENT_ID"
+tenant = "common"        # "consumers" = personal only, "organizations" = work/school only
+days = 2
+unread_only = true
+enabled = false
 
 # =============================== TASKS ======================================
 # A Markdown checklist, e.g. a "Todo" note in your Obsidian vault

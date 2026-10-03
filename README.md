@@ -42,10 +42,11 @@ Where to get each credential:
 | Gmail app password (needs 2-Step Verification) | https://myaccount.google.com/apppasswords |
 | Outlook calendar ICS link | https://outlook.live.com/calendar/0/options/calendar/SharedCalendars (work account: https://outlook.office.com/calendar/options/calendar/SharedCalendars) |
 | iCloud app-specific password | https://account.apple.com → Sign-In and Security → App-Specific Passwords |
+| Outlook / Microsoft 365 email: app registration (one time, then `python -m life_dashboard auth`) | https://entra.microsoft.com → App registrations. Steps in [`01-life-dashboard/README.md`](01-life-dashboard/README.md#outlook--microsoft-365-email) |
 | Todoist API token | https://app.todoist.com/app/settings/integrations/developer |
 | Slack incoming webhook | https://api.slack.com/messaging/webhooks |
 
-Outlook.com and Microsoft 365 **email** isn't supported yet: Microsoft only allows OAuth for IMAP. Outlook **calendars** work through their ICS link.
+Outlook.com and Microsoft 365 email uses Microsoft's sign-in instead of a password, because Microsoft no longer accepts app passwords. You register a free app once, then sign in once in the browser; the saved sign-in keeps scheduled runs working.
 
 Run all tests:
 

@@ -43,6 +43,17 @@ unread_only = true
 limit = 25
 enabled = false
 
+# Outlook.com / Microsoft 365 (Microsoft Graph). One-time setup in README →
+# "Outlook / Microsoft 365 email", then run: python -m life_dashboard auth
+[[connectors]]
+type = "outlook"
+name = "Outlook"
+client_id_env = "OUTLOOK_CLIENT_ID"
+tenant = "common"
+days = 2
+unread_only = true
+enabled = false
+
 # ---- Tasks -----------------------------------------------------------------
 # Markdown checklist (works great with an Obsidian vault: point at a todo note)
 # or JSON list. See README for the syntax.

@@ -87,6 +87,29 @@ def cmd_sources(args) -> int:
     return 0
 
 
+def cmd_auth(args) -> int:
+    from .connectors import ConnectorError, build_connector
+
+    cfg = load_config(args.config)
+    outlook = [c for c in cfg.connectors if c.get("type") == "outlook"]
+    if args.name:
+        outlook = [c for c in outlook if c.get("name") == args.name]
+    if not outlook:
+        print("No enabled [[connectors]] with type = \"outlook\"" + (f" named {args.name!r}" if args.name else "")
+              + f" in {cfg.source_file or 'any config file'}.", file=sys.stderr)
+        return 1
+    for options in outlook:
+        conn = build_connector(options, cfg)
+        print(f"Signing in to {conn.name}...")
+        try:
+            path = conn.login()
+        except ConnectorError as exc:
+            print(f"{conn.name}: sign-in failed: {exc}", file=sys.stderr)
+            return 1
+        print(f"Signed in. Token saved to {path} (keep it private).")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     load_dotenv(Path.cwd() / ".env")
     load_dotenv(PROJECT_DIR / ".env")
@@ -118,6 +141,10 @@ def main(argv: list[str] | None = None) -> int:
     sc.set_defaults(func=cmd_schedule)
 
     sub.add_parser("sources", help="list configured and available connectors").set_defaults(func=cmd_sources)
+
+    a = sub.add_parser("auth", help="one-time browser sign-in for Outlook / Microsoft 365 email connectors")
+    a.add_argument("name", nargs="?", help="connector name (default: every enabled outlook connector)")
+    a.set_defaults(func=cmd_auth)
 
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO if args.verbose else logging.WARNING, format="%(levelname)s %(message)s")

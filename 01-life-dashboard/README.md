@@ -4,7 +4,7 @@ One page that pulls your **calendar, email, tasks and connected tools** onto one
 every morning, has Claude write a **daily briefing** about the day ahead.
 
 ```
-connectors (ICS, IMAP, tasks file, Todoist, sample data)
+connectors (ICS, IMAP, Outlook / Microsoft 365, tasks file, Todoist, sample data)
       │  fetch
       ▼
 normalize (sort, dedupe, conflicts, "needs reply", overdue)
@@ -91,6 +91,7 @@ down) it shows red in **Connected tools**, Claude is told it's unavailable, and 
 |---|---|---|---|
 | `ics` | calendar | `source` (path, `https://` or `webcal://`) | Google, Outlook and iCloud all publish a private iCal URL, so no OAuth is needed. Handles TZID/UTC/floating times, all-day and multi-day events, RRULE (DAILY/WEEKLY/MONTHLY/YEARLY, INTERVAL, BYDAY, UNTIL, COUNT), EXDATE, RECURRENCE-ID overrides and cancelled events. |
 | `imap` | email | `host`, `username`, `password_env`, `mailbox`, `days`, `unread_only`, `limit`, `port` | Stdlib `imaplib`, read-only (`BODY.PEEK`, so nothing gets marked as read). For Gmail, use an App Password. |
+| `outlook` | email | `client_id` (or `client_id_env`), `tenant`, `folder`, `days`, `unread_only`, `limit`, `token_cache` | Outlook.com and Microsoft 365 through Microsoft Graph. Microsoft no longer accepts app passwords over IMAP, so this signs in once in the browser (see below). Read-only (`Mail.Read`). |
 | `tasks_file` | tasks | `path` (`.md` or `.json`) | Markdown checklists, including Obsidian Tasks syntax (see below). |
 | `todoist` | tasks | `token_env`, `filter` (default `today \| overdue`), `api_url` | Stdlib `urllib` against the Todoist API. |
 | `sample_calendar`, `sample_email`, `sample_tasks` | — | — | Bundled demo data. |
@@ -105,6 +106,36 @@ Markdown task syntax:
 
 Priority comes from `!urgent|!high|!normal|!low` (or `!p1`–`!p4`) or from the Tasks emoji
 `🔺 ⏫ 🔼 🔽 ⏬`. The due date comes from `due:YYYY-MM-DD` or `📅 YYYY-MM-DD`, and the project from the first `#tag`.
+
+### Outlook / Microsoft 365 email
+
+Outlook needs a free app registration (about 3 minutes, once) so Microsoft knows which app is asking:
+
+1. Go to https://entra.microsoft.com → **Applications → App registrations → New registration**
+   (or https://portal.azure.com → App registrations). Any name works, e.g. "Life Dashboard".
+2. **Supported account types:** "Accounts in any organizational directory and personal Microsoft accounts".
+   Leave the redirect URI empty. Click **Register** and copy the **Application (client) ID**.
+3. **Authentication → Advanced settings → Allow public client flows → Yes**, then **Save**.
+4. **API permissions** should list `Microsoft Graph → User.Read`. Add **Mail.Read** (Delegated). On a
+   work account your admin may need to grant consent.
+
+Then add the connector and sign in once:
+
+```toml
+[[connectors]]
+type = "outlook"
+name = "Outlook"
+client_id_env = "OUTLOOK_CLIENT_ID"   # the Application (client) ID, kept in .env
+tenant = "common"                     # "consumers" = personal only, "organizations" = work/school only
+```
+
+```bash
+python -m life_dashboard auth          # prints a link and a code: open it, enter the code, sign in
+```
+
+The refresh token is saved to `~/.config/life-dashboard/outlook-<name>.json` (readable only by you) and renewed
+on every build, so the morning cron job needs no browser. If it ever expires (for example after a password
+change), the dashboard shows the Outlook source in red and tells you to run `auth` again.
 
 **Google Calendar / Gmail via OAuth (optional extension):** the ICS + IMAP connectors cover both
 without extra dependencies. If you want the Google APIs themselves (for push, labels or multiple
@@ -192,7 +223,7 @@ as `tests/test_connectors.py` does for Todoist and IMAP.
 │   ├── cli.py            # argparse commands, .env loader
 │   ├── config.py         # TOML config, defaults, sample-connector fallback
 │   ├── models.py         # Event / Email / Task / SourceStatus / Briefing / DayData
-│   ├── connectors/       # base.py (interface + registry), ics, imap, tasks_file, todoist, sample
+│   ├── connectors/       # base.py (interface + registry), ics, imap, outlook, tasks_file, todoist, sample
 │   ├── normalize.py      # sorting, dedupe, conflicts, needs-reply, overdue
 │   ├── briefing.py       # Claude call + offline template
 │   ├── render.py         # HTML (Jinja2), markdown, Obsidian daily note
@@ -211,6 +242,6 @@ python -m pytest -q
 ```
 
 The tests cover the connectors (sample data, the ICS edge cases, Markdown/JSON tasks, IMAP message
-parsing, the Todoist payload), normalization, HTML/markdown/vault rendering (including HTML escaping
+parsing, Outlook sign-in / token refresh / Graph parsing, the Todoist payload), normalization, HTML/markdown/vault rendering (including HTML escaping
 of email content), the briefing step with a mocked Anthropic client (request shape, refusal / error
 fallback), config loading, the schedule snippets and an end-to-end `build --dry-run`.
