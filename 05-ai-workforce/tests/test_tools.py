@@ -44,6 +44,21 @@ def test_run_sibling_allowlist(tmp_path):
     assert run_sibling_cli(siblings, tmp_path, "exec-assistant", ["--help"]).startswith("exit=0")
 
 
-def test_send_message_without_webhook(make_ctx):
+def test_send_message_without_webhook(make_ctx, monkeypatch):
+    for var in ("TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID", "WORKFORCE_WEBHOOK_URL", "NOTIFY_WEBHOOK_URL"):
+        monkeypatch.delenv(var, raising=False)
     text, err = execute_tool(build_registry().get("send_message"), {"text": "hi"}, make_ctx())
-    assert not err and "not set" in text
+    assert not err and "not sent" in text
+
+
+def test_deliver_message_channels(monkeypatch):
+    from workforce import tools
+
+    posts = []
+    monkeypatch.setattr(tools, "_post_json", lambda url, payload: posts.append((url, payload)) or 200)
+    env = {"TELEGRAM_BOT_TOKEN": "123:abc", "TELEGRAM_CHAT_ID": "42", "WORKFORCE_WEBHOOK_URL": "https://hooks.slack.com/x"}
+    assert tools.deliver_message("x" * 4500, env=env) == "sent to Telegram (2 messages)"
+    assert posts[0][0] == "https://api.telegram.org/bot123:abc/sendMessage" and posts[0][1]["chat_id"] == "42"
+    posts.clear()
+    assert tools.deliver_message("hi", env={"NOTIFY_WEBHOOK_URL": "https://discord.com/api/webhooks/1"}) == "sent (HTTP 200)"
+    assert posts == [("https://discord.com/api/webhooks/1", {"content": "hi"})]

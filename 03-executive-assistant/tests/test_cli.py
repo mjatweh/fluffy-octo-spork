@@ -51,3 +51,36 @@ def test_webhook_payload_shapes():
     assert notify.webhook_payload("https://discord.com/api/webhooks/1", "hi") == {"content": "hi"}
     assert notify.webhook_payload("https://hooks.slack.com/x", "hi") == {"text": "hi"}
     assert set(notify.webhook_payload("https://example.com/hook", "hi")) == {"text", "content"}
+
+
+def test_send_uses_telegram_when_configured(monkeypatch, capsys):
+    sent = []
+    monkeypatch.setattr(notify, "desktop", lambda *a: False)
+    monkeypatch.setattr(notify, "telegram", lambda token, chat, msg: sent.append((token, chat, msg)) or True)
+    used = notify.send("Weekly review", "body", None, env={"TELEGRAM_BOT_TOKEN": "t", "TELEGRAM_CHAT_ID": "42"})
+    assert used == ["stdout", "telegram"] and sent == [("t", "42", "Weekly review\nbody")]
+    assert notify.send("x", "y", None, env={})[-1] == "stdout"
+
+
+def test_telegram_splits_long_reports(monkeypatch):
+    bodies = []
+
+    class Resp:
+        status = 200
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+    def urlopen(req, timeout=10):
+        import json as _json
+        bodies.append(_json.loads(req.data))
+        assert req.full_url == "https://api.telegram.org/bott/sendMessage"
+        return Resp()
+
+    monkeypatch.setattr(notify.urllib.request, "urlopen", urlopen)
+    report = "\n".join("row %d %s" % (i, "x" * 80) for i in range(120))
+    assert notify.telegram("t", "42", report)
+    assert len(bodies) > 1 and all(len(b["text"]) <= 4000 and b["chat_id"] == "42" for b in bodies)

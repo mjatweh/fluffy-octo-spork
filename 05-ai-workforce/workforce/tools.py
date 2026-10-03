@@ -103,19 +103,44 @@ def build_registry() -> ToolRegistry:
     @reg.tool(params={"text": "Message body (markdown ok)", "channel": "Optional channel/recipient label"},
               side_effect=True)
     def send_message(ctx: ToolContext, text: str, channel: str = "") -> str:
-        """Send a message to the owner's webhook (Slack/Discord/etc. via WORKFORCE_WEBHOOK_URL)."""
-        url = os.environ.get("WORKFORCE_WEBHOOK_URL") or os.environ.get("NOTIFY_WEBHOOK_URL", "")
-        if not url:
-            return "WORKFORCE_WEBHOOK_URL is not set; message not sent."
-        body = json.dumps({"text": text, "channel": channel, "content": text}).encode()
-        req = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json"})
-        with urllib.request.urlopen(req, timeout=15) as r:
-            return f"sent (HTTP {r.status})"
+        """Send a message to the owner: Telegram (TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID) or a
+        Slack/Discord/other webhook (WORKFORCE_WEBHOOK_URL or NOTIFY_WEBHOOK_URL)."""
+        return deliver_message(text, channel)
 
     return reg
 
 
 # --- helpers (pure functions, easy to test) ----------------------------------------------------
+
+def _post_json(url: str, payload: dict) -> int:
+    req = urllib.request.Request(url, data=json.dumps(payload).encode(), headers={"Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=15) as r:
+        return r.status
+
+
+def deliver_message(text: str, channel: str = "", env: dict | None = None) -> str:
+    env = os.environ if env is None else env
+    token, chat = env.get("TELEGRAM_BOT_TOKEN", ""), env.get("TELEGRAM_CHAT_ID", "")
+    if token and chat:
+        parts = [text[i:i + 4000] for i in range(0, len(text), 4000)] or [""]
+        try:
+            for part in parts:
+                _post_json(f"https://api.telegram.org/bot{token}/sendMessage",
+                           {"chat_id": chat, "text": part, "disable_web_page_preview": True})
+        except OSError as exc:  # don't echo the URL: it contains the bot token
+            return f"Telegram send failed: HTTP {exc.code}" if hasattr(exc, "code") else "Telegram send failed: network error"
+        return f"sent to Telegram ({len(parts)} message{'s' * (len(parts) != 1)})"
+    url = env.get("WORKFORCE_WEBHOOK_URL") or env.get("NOTIFY_WEBHOOK_URL", "")
+    if not url:
+        return "No Telegram or webhook configured (TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID, or WORKFORCE_WEBHOOK_URL); message not sent."
+    if "discord.com" in url or "discordapp.com" in url:
+        payload = {"content": text[:1990]}
+    elif "hooks.slack.com" in url:
+        payload = {"text": text}
+    else:
+        payload = {"text": text, "channel": channel, "content": text}
+    return f"sent (HTTP {_post_json(url, payload)})"
+
 
 def html_to_text(raw: str) -> str:
     raw = re.sub(r"(?is)<(script|style|noscript|svg).*?</\1>", " ", raw)

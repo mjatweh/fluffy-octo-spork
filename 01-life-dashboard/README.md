@@ -45,10 +45,12 @@ python -m life_dashboard build
 
 | Command | What it does |
 |---|---|
-| `build` | Collect, brief, write `output/dashboard.html`, `output/briefing.md` and `output/briefing-YYYY-MM-DD.md`, and print the briefing. Flags: `--dry-run`, `--sample`, `--date YYYY-MM-DD`, `--output DIR`, `-q`. |
+| `build` | Collect, brief, write `output/dashboard.html`, `output/briefing.md` and `output/briefing-YYYY-MM-DD.md`, and print the briefing. Flags: `--dry-run`, `--sample`, `--date YYYY-MM-DD`, `--output DIR`, `-q`, `--notify` (also send a compact briefing to Telegram, or to `NOTIFY_WEBHOOK_URL`). |
 | `serve` | Serve the output folder with `http.server`. Flags: `--port`, `--host`, `--build` (rebuild first), `--dry-run`. |
 | `schedule` | Print a snippet that runs `build` every morning: `--format cron\|launchd\|systemd\|github`, `--time 07:00`. |
 | `sources` | List the enabled connectors and every available connector type. |
+| `telegram` | Find your Telegram chat id (after you've messaged your bot) and send a test message. |
+| `auth` | One-time browser sign-in for Outlook / Microsoft 365 mail and calendar. |
 
 Global flags: `-c/--config PATH` (default `./config.toml`, then `$LIFE_DASHBOARD_CONFIG`, then the
 project folder) and `-v` for verbose logging. With no config file at all, the bundled sample connectors are used.
@@ -214,6 +216,14 @@ to Claude through the official `anthropic` SDK:
   reason is shown in the page footer and on stderr.
 
 ## Run it automatically every morning
+
+The generated snippets run `build --notify`, so the briefing also lands on your phone once Telegram is set up:
+
+1. In Telegram, message [@BotFather](https://t.me/BotFather), send `/newbot` and follow the prompts.
+2. Put the token in `.env` as `TELEGRAM_BOT_TOKEN=...`, then send your new bot any message.
+3. Run `python -m life_dashboard telegram`: it prints the `TELEGRAM_CHAT_ID=...` line to add to `.env` and sends a test message.
+
+Without Telegram, `--notify` uses `NOTIFY_WEBHOOK_URL` (Slack / Discord), or just prints a warning.
 
 Generate a snippet with your real paths:
 

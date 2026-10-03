@@ -1,7 +1,8 @@
-"""Notification hooks: desktop (notify-send / osascript) and generic webhooks (stdlib urllib)."""
+"""Notification hooks: desktop (notify-send / osascript), Telegram bot and generic webhooks (stdlib urllib)."""
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -46,13 +47,51 @@ def webhook(url: str, message: str, timeout: float = 10) -> bool:
         return False
 
 
+def chunks(text: str, limit: int = 4000) -> list[str]:
+    """Split on line breaks into pieces that fit one Telegram message (max 4096 chars)."""
+    out, cur = [], ""
+    for line in text.splitlines(keepends=True):
+        while len(line) > limit:
+            out.append(line[:limit])
+            line = line[limit:]
+        if len(cur) + len(line) > limit:
+            out.append(cur)
+            cur = ""
+        cur += line
+    if cur.strip():
+        out.append(cur)
+    return out
+
+
+def telegram(token: str, chat_id: str, message: str, timeout: float = 10) -> bool:
+    """Send via the Telegram Bot API (TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID), splitting long reports."""
+    url = f"https://api.telegram.org/bot{token}/sendMessage"
+    try:
+        for part in chunks(message):
+            body = json.dumps({"chat_id": chat_id, "text": part, "disable_web_page_preview": True}).encode()
+            req = urllib.request.Request(url, data=body, method="POST", headers={
+                "Content-Type": "application/json", "User-Agent": "exec-assistant/1.0"})
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                if not 200 <= resp.status < 300:
+                    return False
+        return True
+    except OSError as exc:  # never print the URL: it contains the bot token
+        detail = f"HTTP {exc.code}" if hasattr(exc, "code") else getattr(exc, "reason", type(exc).__name__)
+        print(f"[exec-assistant] Telegram failed: {detail}", file=sys.stderr)
+        return False
+
+
 def send(title: str, message: str, webhook_url: str | None = None,
-         use_desktop: bool = True) -> list[str]:
+         use_desktop: bool = True, env: dict | None = None) -> list[str]:
     """Print the nudge and fan out to whatever channels are available. Returns channels used."""
+    env = os.environ if env is None else env
     print(f"{title}\n{message}")
     sent = ["stdout"]
     if use_desktop and desktop(title, message):
         sent.append("desktop")
+    token, chat = env.get("TELEGRAM_BOT_TOKEN", ""), env.get("TELEGRAM_CHAT_ID", "")
+    if token and chat and telegram(token, chat, f"{title}\n{message}"):
+        sent.append("telegram")
     if webhook_url and webhook(webhook_url, f"*{title}*\n{message}"):
         sent.append("webhook")
     return sent

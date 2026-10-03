@@ -36,7 +36,8 @@ python -m exec_assistant weekly --dry-run
 | `CLAUDE_MODEL` | `claude-opus-5-5` | Model override (also `--model`). |
 | `EA_DATA_DIR` | `~/.exec_assistant` | SQLite DB (`exec_assistant.db`), `reports/`, `cron.log`. |
 | `VAULT_PATH` | - | Obsidian vault root. Writes `Daily/YYYY-MM-DD.md` and `Weekly/YYYY-Www.md`. |
-| `EA_WEBHOOK_URL` | - | Slack, Discord, Telegram, or any JSON webhook for nudges and weekly reports. |
+| `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | - | Send nudges and weekly reports to Telegram (long reports are split into several messages). Usually set once in the shared root `.env`. |
+| `EA_WEBHOOK_URL` | `NOTIFY_WEBHOOK_URL` | Slack, Discord, or any JSON webhook for nudges and weekly reports. |
 
 ## Daily workflow
 
@@ -79,7 +80,7 @@ python -m exec_assistant schedule --morning 07:30 --evening 20:45 --weekly "Fri 
 ```
 
 The morning and evening cron jobs run `nudge morning|evening`. A nudge prints the reminder, shows a
-desktop notification (`notify-send` on Linux, `osascript` on macOS) and POSTs to `EA_WEBHOOK_URL`. The
+desktop notification (`notify-send` on Linux, `osascript` on macOS), messages you on Telegram when it's configured, and POSTs to `EA_WEBHOOK_URL`. The
 message includes the command to run. The weekly cron job runs `weekly --notify`, which builds the report
 without any input and sends it to the webhook. If you'd rather review the week yourself, use
 `nudge weekly` instead.
@@ -120,7 +121,7 @@ exec_assistant/
   llm.py       Anthropic SDK wrapper: dry-run, offline fallback, refusal handling
   store.py     sqlite3: checkins, priorities (done 0/0.5/1), tags, weekly_reports
   vault.py     marker-based section upsert for Obsidian notes
-  notify.py    desktop + webhook notifications
+  notify.py    desktop, Telegram + webhook notifications
   demo.py      deterministic sample week
   config.py    env / .env configuration
 ```

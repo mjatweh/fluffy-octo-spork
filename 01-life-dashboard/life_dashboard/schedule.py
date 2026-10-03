@@ -29,7 +29,7 @@ def snippet(fmt: str, at: str, config: Config, python: str | None = None, projec
     hour, minute = _hm(at)
     py = python or sys.executable
     proj = Path(project or PROJECT_DIR)
-    args = "build" + (f" --config {config.source_file}" if config.source_file else "")
+    args = "build --notify" + (f" --config {config.source_file}" if config.source_file else "")
     log = proj / "output" / "build.log"
 
     if fmt == "cron":
@@ -87,6 +87,8 @@ WantedBy=timers.target
         return f"""# .github/workflows/life-dashboard.yml  (at the repository root)
 # GitHub cron is UTC: {at} in {config.timezone or 'local time'} is {uh:02d}:{um:02d} UTC today
 # (adjust after daylight-saving changes). Add ANTHROPIC_API_KEY under Settings → Secrets → Actions.
+# PRIVATE REPOSITORIES ONLY: the dashboard artifact holds your calendar and email, and artifacts
+# of a public repository can be downloaded by other people.
 name: Life Dashboard
 on:
   schedule:
@@ -104,9 +106,11 @@ jobs:
         with:
           python-version: "3.11"
       - run: pip install -r requirements.txt
-      - run: python -m life_dashboard build
+      - run: python -m life_dashboard build --notify
         env:
           ANTHROPIC_API_KEY: ${{{{ secrets.ANTHROPIC_API_KEY }}}}
+          TELEGRAM_BOT_TOKEN: ${{{{ secrets.TELEGRAM_BOT_TOKEN }}}}
+          TELEGRAM_CHAT_ID: ${{{{ secrets.TELEGRAM_CHAT_ID }}}}
           # IMAP_PASSWORD: ${{{{ secrets.IMAP_PASSWORD }}}}
       - uses: actions/upload-artifact@v4
         with:

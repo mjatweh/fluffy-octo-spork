@@ -31,7 +31,7 @@ cp connections.example.toml connections.toml      # which calendars / inboxes / 
 
 - **`.env`**: every project loads it automatically. A project's own `.env` or a real environment variable wins over it.
 - **`connections.toml`**: the Life Dashboard finds it automatically. The Executive Assistant and AI Workforce reach the same data through the dashboard and the vault's `Daily/` note.
-- **`NOTIFY_WEBHOOK_URL`**: one webhook for check-in nudges, weekly reports and agent messages. The per-project `EA_WEBHOOK_URL` and `WORKFORCE_WEBHOOK_URL` still override it.
+- **Notifications**: set `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` once and the morning briefing (`build --notify`), check-in nudges, weekly reports and agent messages all reach your phone. `NOTIFY_WEBHOOK_URL` (Slack / Discord) works instead; the per-project `EA_WEBHOOK_URL` and `WORKFORCE_WEBHOOK_URL` still override it.
 
 Where to get each credential:
 
@@ -44,6 +44,7 @@ Where to get each credential:
 | iCloud app-specific password (iCloud Mail, and iCloud calendars including ones shared with you) | https://account.apple.com → Sign-In and Security → App-Specific Passwords |
 | Outlook / Microsoft 365 email + calendar: app registration (one time, then `python -m life_dashboard auth`) | https://entra.microsoft.com → App registrations. Steps in [`01-life-dashboard/README.md`](01-life-dashboard/README.md#outlook--microsoft-365-email-and-calendar) |
 | Todoist API token | https://app.todoist.com/app/settings/integrations/developer |
+| Telegram bot (notifications) | In Telegram, message [@BotFather](https://t.me/BotFather) → `/newbot`; put the token in `.env`, message your bot once, then run `python -m life_dashboard telegram` to get your chat id and a test message |
 | Slack incoming webhook | https://api.slack.com/messaging/webhooks |
 
 Outlook.com and Microsoft 365 email and calendar use Microsoft's sign-in instead of a password, because Microsoft no longer accepts app passwords. You register a free app once, then sign in once in the browser; the saved sign-in keeps scheduled runs working.

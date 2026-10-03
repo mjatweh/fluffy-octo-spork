@@ -72,7 +72,7 @@ workforce/
   agent.py      Agent dataclass, the agent loop (tool use, max-turn guard, parallel tool calls),
                 Usage (tokens + est. cost per agent), Transcript (JSONL)
   registry.py   Tool registry: Python function + JSON schema (generated from type hints), validation
-  tools.py      Built-in tools (files, csv, web, knowledge, siblings, webhook)
+  tools.py      Built-in tools (files, csv, web, knowledge, siblings, Telegram / webhook)
   team.py       Team: Chief of Staff run, delegate_task, run_specialist, ask, standup
   knowledge.py  Second Brain adapter (sibling agent_api → local markdown fallback)
   safety.py     Approver (human-in-the-loop) + safe_path sandbox
@@ -151,7 +151,7 @@ Then list `"stock_price"` in an agent's `tools`. Set `side_effect=True` for anyt
 - **Sandboxed workspace.** `read_file`, `write_file`, `list_files` and `analyze_csv` resolve paths inside `workspace/`. Absolute paths, `..` and symlink escapes are rejected.
 - **Human-in-the-loop for side effects.** These tools ask `Allow? [y/N]` on stdin before they run:
   - `write_note`: writes outside the workspace, into your vault
-  - `send_message`: webhook
+  - `send_message`: Telegram (`TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID`) or a webhook (`WORKFORCE_WEBHOOK_URL` / `NOTIFY_WEBHOOK_URL`)
   - `run_sibling`: runs other programs
 
   Prompts are serialized across parallel workers. `--yes` auto-approves. With no TTY and no `--yes` (e.g. cron), the default is **deny**. When the human declines, the agent is told and continues without that tool.
