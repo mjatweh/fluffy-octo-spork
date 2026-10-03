@@ -90,6 +90,7 @@ def cmd_sources(args) -> int:
 def main(argv: list[str] | None = None) -> int:
     load_dotenv(Path.cwd() / ".env")
     load_dotenv(PROJECT_DIR / ".env")
+    load_dotenv(PROJECT_DIR.parent / ".env")  # shared monorepo .env
     parser = argparse.ArgumentParser(prog="life_dashboard", description="Your day on one page, with a Claude-written morning briefing.")
     parser.add_argument("-c", "--config", help="path to config.toml (default: ./config.toml, $LIFE_DASHBOARD_CONFIG)")
     parser.add_argument("-v", "--verbose", action="store_true")

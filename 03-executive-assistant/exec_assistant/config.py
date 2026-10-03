@@ -35,7 +35,7 @@ class Config:
             data_dir=Path(env.get("EA_DATA_DIR") or Path.home() / ".exec_assistant").expanduser(),
             vault_path=Path(vault).expanduser() if vault else None,
             model=env.get("CLAUDE_MODEL") or DEFAULT_MODEL,
-            webhook_url=env.get("EA_WEBHOOK_URL") or None,
+            webhook_url=env.get("EA_WEBHOOK_URL") or env.get("NOTIFY_WEBHOOK_URL") or None,
         )
 
     @property

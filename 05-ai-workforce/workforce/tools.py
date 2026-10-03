@@ -104,7 +104,7 @@ def build_registry() -> ToolRegistry:
               side_effect=True)
     def send_message(ctx: ToolContext, text: str, channel: str = "") -> str:
         """Send a message to the owner's webhook (Slack/Discord/etc. via WORKFORCE_WEBHOOK_URL)."""
-        url = os.environ.get("WORKFORCE_WEBHOOK_URL", "")
+        url = os.environ.get("WORKFORCE_WEBHOOK_URL") or os.environ.get("NOTIFY_WEBHOOK_URL", "")
         if not url:
             return "WORKFORCE_WEBHOOK_URL is not set; message not sent."
         body = json.dumps({"text": text, "channel": channel, "content": text}).encode()

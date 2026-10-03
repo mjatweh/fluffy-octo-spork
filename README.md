@@ -18,9 +18,34 @@ Run each command from inside its project folder.
 
 ```bash
 pip install anthropic jinja2 pytest        # mcp and pypdf are optional extras for project 2
-export ANTHROPIC_API_KEY=sk-ant-...        # optional; without it everything runs offline
-export VAULT_PATH=~/SecondBrain            # optional; shared Obsidian vault (see below)
 ```
+
+### Connect your accounts once, for all five projects
+
+Two files at the repo root hold everything; both are gitignored, so your credentials never get committed:
+
+```bash
+cp .env.example .env                              # API key, app passwords, vault path, webhook
+cp connections.example.toml connections.toml      # which calendars / inboxes / task lists to read
+```
+
+- **`.env`**: every project loads it automatically. A project's own `.env` or a real environment variable wins over it.
+- **`connections.toml`**: the Life Dashboard finds it automatically. The Executive Assistant and AI Workforce reach the same data through the dashboard and the vault's `Daily/` note.
+- **`NOTIFY_WEBHOOK_URL`**: one webhook for check-in nudges, weekly reports and agent messages. The per-project `EA_WEBHOOK_URL` and `WORKFORCE_WEBHOOK_URL` still override it.
+
+Where to get each credential:
+
+| What | Link |
+|---|---|
+| Claude API key | https://console.anthropic.com/settings/keys |
+| Google Calendar iCal link | https://calendar.google.com/calendar/r/settings → pick the calendar → "Secret address in iCal format" |
+| Gmail app password (needs 2-Step Verification) | https://myaccount.google.com/apppasswords |
+| Outlook calendar ICS link | https://outlook.live.com/calendar/0/options/calendar/SharedCalendars (work account: https://outlook.office.com/calendar/options/calendar/SharedCalendars) |
+| iCloud app-specific password | https://account.apple.com → Sign-In and Security → App-Specific Passwords |
+| Todoist API token | https://app.todoist.com/app/settings/integrations/developer |
+| Slack incoming webhook | https://api.slack.com/messaging/webhooks |
+
+Outlook.com and Microsoft 365 **email** isn't supported yet: Microsoft only allows OAuth for IMAP. Outlook **calendars** work through their ICS link.
 
 Run all tests:
 

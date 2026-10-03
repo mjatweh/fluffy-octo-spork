@@ -1,0 +1,102 @@
+# Your calendars, email and tasks — set up ONCE for all five projects.
+# Copy to connections.toml (same folder; gitignored) and fill in.
+#
+#  - The Life Dashboard reads it directly (it is found automatically).
+#  - The Executive Assistant and AI Workforce agents get the same data by running
+#    the dashboard, and the briefing lands in your vault's Daily/ note.
+#
+# Passwords and tokens are NOT stored here: *_env options name a variable in ../.env.
+# Relative paths below are resolved against this folder.
+
+timezone = "America/New_York"          # your IANA time zone, e.g. "Europe/London", "Asia/Dubai"
+output_dir = "01-life-dashboard/output"
+max_emails = 8
+# vault_path defaults to VAULT_PATH from .env
+
+# ============================ CALENDARS =====================================
+# Paste each calendar's private iCal (.ics) link. Add a [[connectors]] block per calendar.
+
+# Google Calendar → Settings → click the calendar → "Integrate calendar" →
+# "Secret address in iCal format"
+[[connectors]]
+type = "ics"
+name = "Google Calendar"
+source = "https://calendar.google.com/calendar/ical/YOUR_ID/private-YOUR_SECRET/basic.ics"
+enabled = false
+
+# Outlook / Microsoft 365 → Settings → Calendar → Shared calendars →
+# "Publish a calendar" → choose calendar + "Can view all details" → copy the ICS link
+[[connectors]]
+type = "ics"
+name = "Outlook Calendar"
+source = "https://outlook.office365.com/owa/calendar/XXXX/reachcalendar.ics"
+enabled = false
+
+# iCloud → Calendar app → share icon next to the calendar → tick "Public Calendar" → copy link
+# (webcal:// links are fine)
+[[connectors]]
+type = "ics"
+name = "iCloud Calendar"
+source = "webcal://pXX-caldav.icloud.com/published/2/XXXX"
+enabled = false
+
+# =============================== EMAIL ======================================
+# Read-only IMAP: nothing is sent, deleted, or marked as read.
+
+# Gmail: turn on 2-Step Verification, create an App Password, put it in .env as GMAIL_APP_PASSWORD
+[[connectors]]
+type = "imap"
+name = "Gmail"
+host = "imap.gmail.com"
+username = "you@gmail.com"
+password_env = "GMAIL_APP_PASSWORD"
+days = 2
+unread_only = true
+limit = 25
+enabled = false
+
+# iCloud Mail: create an app-specific password at account.apple.com → Sign-In and Security
+[[connectors]]
+type = "imap"
+name = "iCloud Mail"
+host = "imap.mail.me.com"
+username = "you@icloud.com"
+password_env = "ICLOUD_APP_PASSWORD"
+enabled = false
+
+# Yahoo Mail: Account security → Generate app password
+[[connectors]]
+type = "imap"
+name = "Yahoo Mail"
+host = "imap.mail.yahoo.com"
+username = "you@yahoo.com"
+password_env = "YAHOO_APP_PASSWORD"
+enabled = false
+
+# Outlook.com / Microsoft 365 mail is NOT supported yet: Microsoft no longer
+# allows app passwords over IMAP (OAuth only). Calendars above work fine.
+
+# =============================== TASKS ======================================
+# A Markdown checklist, e.g. a "Todo" note in your Obsidian vault
+[[connectors]]
+type = "tasks_file"
+name = "Todo list"
+path = "~/SecondBrain/Todo.md"
+enabled = false
+
+# Todoist: Settings → Integrations → Developer → API token → .env TODOIST_API_TOKEN
+[[connectors]]
+type = "todoist"
+name = "Todoist"
+token_env = "TODOIST_API_TOKEN"
+filter = "today | overdue"
+enabled = false
+
+# ========================= QUICK LINKS on the dashboard =====================
+[[links]]
+name = "Gmail"
+url = "https://mail.google.com"
+
+[[links]]
+name = "Google Calendar"
+url = "https://calendar.google.com"

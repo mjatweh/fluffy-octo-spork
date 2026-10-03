@@ -50,8 +50,13 @@ class Config:
         self.connectors = list(SAMPLE_CONNECTORS)
 
 
+# The monorepo-level file shared by all five projects (see ../connections.example.toml).
+SHARED_CONNECTIONS = PROJECT_DIR.parent / "connections.toml"
+
+
 def find_config(explicit: str | None = None) -> Path | None:
-    candidates = [explicit, os.environ.get("LIFE_DASHBOARD_CONFIG"), "config.toml", PROJECT_DIR / "config.toml"]
+    candidates = [explicit, os.environ.get("LIFE_DASHBOARD_CONFIG"), "config.toml", PROJECT_DIR / "config.toml",
+                  SHARED_CONNECTIONS]
     for c in candidates:
         if c and Path(c).expanduser().is_file():
             return Path(c).expanduser().resolve()
@@ -63,6 +68,8 @@ def find_config(explicit: str | None = None) -> Path | None:
 def load_config(path: str | None = None) -> Config:
     found = find_config(path)
     cfg = Config()
+    if os.environ.get("VAULT_PATH"):
+        cfg.vault_path = Path(os.environ["VAULT_PATH"]).expanduser()
     if found is None:
         cfg.model = os.environ.get("CLAUDE_MODEL") or DEFAULT_MODEL
         return cfg

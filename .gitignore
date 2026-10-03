@@ -1,0 +1,5 @@
+# Your real credentials and connections live here — never commit them.
+.env
+connections.toml
+__pycache__/
+.pytest_cache/

@@ -237,6 +237,8 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     load_dotenv()
+    load_dotenv(Path(__file__).resolve().parents[1] / ".env")
+    load_dotenv(Path(__file__).resolve().parents[2] / ".env")  # shared monorepo .env
     args = build_parser().parse_args(argv)
     try:
         return args.func(args)

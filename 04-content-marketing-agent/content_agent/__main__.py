@@ -15,4 +15,5 @@ def _load_dotenv(path: Path) -> None:
 
 
 _load_dotenv(Path.cwd() / ".env")
+_load_dotenv(Path(__file__).resolve().parents[2] / ".env")  # shared monorepo .env
 sys.exit(main())
