@@ -1,0 +1,28 @@
+# Copy to <workspace>/deals/criteria.toml (or $DEALS_DIR/criteria.toml); that folder is gitignored.
+# Rules are min_<metric> / max_<metric>; the metric names match what the analyst computes.
+# Text values are passed to the analyst as notes. These are starting defaults: edit freely.
+
+[real_estate]
+min_cap_rate_pct = 6.5
+min_dscr = 1.25
+min_cash_on_cash_pct = 7.0
+max_check_size = 5000000
+geography = "Southeast US first; open to other growth markets"
+types = "industrial, multifamily, retail with strong anchors"
+
+[operating_business]
+min_ebitda = 1000000
+max_ev_to_ebitda = 6.0
+min_irr_pct = 20.0
+max_check_size = 10000000
+notes = "Founder-owned, recurring customers, a clear operator; manufacturing and services welcome"
+
+[venture]
+max_check_size = 500000
+min_moic = 5.0
+notes = "Founders we know or can reference; follow-on reserves of 1x the first check"
+
+[funds]
+min_irr_pct = 12.0
+max_check_size = 2000000
+notes = "Managers with 2+ realized funds; fees and lock-up summarized in every memo"

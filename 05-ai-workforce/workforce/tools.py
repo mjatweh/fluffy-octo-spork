@@ -110,6 +110,10 @@ def build_registry() -> ToolRegistry:
     from .trading import register_trading_tools
 
     register_trading_tools(reg)
+
+    from .deals import register_deal_tools
+
+    register_deal_tools(reg)
     return reg
 
 

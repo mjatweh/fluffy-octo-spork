@@ -114,6 +114,7 @@ Tool exceptions, invalid inputs and unknown tools go back to the model as `is_er
 | `sales_outreach` | Sales & Outreach | ICP, lead lists, outreach sequences, follow-ups | analyze_csv, files, search_knowledge, send_message† |
 | `ops_analyst` | Operations & Finance Analyst | KPIs, revenue, margins and pipeline from CSVs | analyze_csv, list/read/write files |
 | `knowledge_manager` | Knowledge Manager | Retrieves and files notes, decisions and SOPs in the Second Brain | search_knowledge, read_note, write_note†, upcoming_dates |
+| `deal_analyst` | Deal Analyst | Screens deals against your criteria, writes memos, keeps the pipeline tracker, drafts investor one-pagers. Never contacts brokers, sellers or investors. | deal_criteria, deal_inbox, read_deal_document, real_estate_metrics, investment_returns, check_deal_criteria, deal_pipeline, update_pipeline, save_deal_memo, search_knowledge, read_note, web_fetch |
 | `trading_analyst` | Trading Analyst | Portfolio review and trade ideas sized to your risk profile. **Analysis only: it has no tool that can trade.** | risk_profile, portfolio_snapshot, technical_signals, smart_money_signals, check_trade_idea, web_fetch, files |
 
 Put CSVs (e.g. `revenue.csv`, `leads.csv`) in `workspace/`, then try `run --playbook weekly-business-review`.
@@ -146,6 +147,25 @@ def stock_price(ctx: ToolContext, ticker: str) -> dict:
 ```
 
 Then list `"stock_price"` in an agent's `tools`. Set `side_effect=True` for anything that changes the outside world. That puts the tool behind the approval gate and makes dry-run skip it automatically. At startup the team checks that every tool named in the roster exists.
+
+## Deal analyst
+
+For a family office or investment team. Everything lives in the deals folder: `workspace/deals/` by
+default, or `$DEALS_DIR`. Both are kept out of git.
+
+| Path | What it is |
+|---|---|
+| `criteria.toml` | Criteria per asset class (`real_estate`, `operating_business`, `venture`, `funds`) as `min_<metric>` / `max_<metric>`, plus free-text notes. Start from `examples/deals/criteria.example.toml`. |
+| `inbox/` | Deals to screen: pasted listings (`.md` / `.txt`), forwarded emails (`.eml`), teasers and offering memos (`.pdf` needs `pip install pypdf`). |
+| `pipeline.csv` | The tracker the agent maintains: stage (`new` → `screening` → `diligence` → `loi` → `under_contract` → `closed`, or `passed`), key metric, recommendation, next step, owner. |
+| `memos/` | Screening memos and investor one-pagers. |
+
+The agent works out returns itself: cap rate, debt service, DSCR and cash-on-cash for property, and IRR
+and MOIC from cash flows. It states every assumption. Playbooks:
+
+- `run --playbook deal-screen` screens what's new in the inbox.
+- `run --playbook pipeline-review` is the weekly pipeline review, a good fit for a Sunday cron.
+- `run --playbook investor-one-pager --var audience="family offices in the Southeast"` drafts a one-pager.
 
 ## Trading analyst
 
