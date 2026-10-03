@@ -24,20 +24,26 @@ name = "Google Calendar"
 source = "https://calendar.google.com/calendar/ical/YOUR_ID/private-YOUR_SECRET/basic.ics"
 enabled = false
 
-# Outlook / Microsoft 365 → Settings → Calendar → Shared calendars →
-# "Publish a calendar" → choose calendar + "Can view all details" → copy the ICS link
+# Outlook / Microsoft 365 calendar (Teams meetings come with their Join link).
+# Uses the same one-time Microsoft sign-in as the Outlook email below: keep the same `account`.
 [[connectors]]
-type = "ics"
+type = "outlook_calendar"
 name = "Outlook Calendar"
-source = "https://outlook.office365.com/owa/calendar/XXXX/reachcalendar.ics"
+account = "outlook"
+client_id_env = "OUTLOOK_CLIENT_ID"
+tenant = "common"
 enabled = false
 
-# iCloud → Calendar app → share icon next to the calendar → tick "Public Calendar" → copy link
-# (webcal:// links are fine)
+# iCloud calendars through your own Apple ID: includes calendars other people share
+# with you (e.g. a family calendar someone else owns), and nothing is made public.
+# Create an app-specific password at account.apple.com → Sign-In and Security, put it in
+# .env as ICLOUD_APP_PASSWORD. List the calendars to include by name (omit = all).
 [[connectors]]
-type = "ics"
-name = "iCloud Calendar"
-source = "webcal://pXX-caldav.icloud.com/published/2/XXXX"
+type = "icloud"
+name = "iCloud"
+username = "you@icloud.com"            # your Apple ID email
+password_env = "ICLOUD_APP_PASSWORD"
+calendars = ["Family"]
 enabled = false
 
 # =============================== EMAIL ======================================
@@ -74,12 +80,13 @@ password_env = "YAHOO_APP_PASSWORD"
 enabled = false
 
 # Outlook.com / Microsoft 365: Microsoft no longer accepts app passwords, so this
-# signs in through the browser once. Register a free app first (01-life-dashboard/README.md →
-# "Outlook / Microsoft 365 email"), put its Application (client) ID in .env as
+# signs in through the browser once (covers the Outlook Calendar above too). Register a free app first (01-life-dashboard/README.md →
+# "Outlook / Microsoft 365 email and calendar"), put its Application (client) ID in .env as
 # OUTLOOK_CLIENT_ID, then run:  cd 01-life-dashboard && python -m life_dashboard auth
 [[connectors]]
 type = "outlook"
 name = "Outlook"
+account = "outlook"      # same account as the Outlook Calendar above = one sign-in for both
 client_id_env = "OUTLOOK_CLIENT_ID"
 tenant = "common"        # "consumers" = personal only, "organizations" = work/school only
 days = 2

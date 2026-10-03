@@ -91,15 +91,20 @@ def cmd_auth(args) -> int:
     from .connectors import ConnectorError, build_connector
 
     cfg = load_config(args.config)
-    outlook = [c for c in cfg.connectors if c.get("type") == "outlook"]
+    outlook = [c for c in cfg.connectors if c.get("type") in ("outlook", "outlook_calendar")]
     if args.name:
-        outlook = [c for c in outlook if c.get("name") == args.name]
+        outlook = [c for c in outlook if args.name in (c.get("name"), c.get("account"))]
     if not outlook:
-        print("No enabled [[connectors]] with type = \"outlook\"" + (f" named {args.name!r}" if args.name else "")
+        print("No enabled [[connectors]] with type = \"outlook\" or \"outlook_calendar\""
+              + (f" named {args.name!r}" if args.name else "")
               + f" in {cfg.source_file or 'any config file'}.", file=sys.stderr)
         return 1
+    done = set()
     for options in outlook:
         conn = build_connector(options, cfg)
+        if conn.token_cache in done:  # mail + calendar of one account share a sign-in
+            continue
+        done.add(conn.token_cache)
         print(f"Signing in to {conn.name}...")
         try:
             path = conn.login()
@@ -142,8 +147,8 @@ def main(argv: list[str] | None = None) -> int:
 
     sub.add_parser("sources", help="list configured and available connectors").set_defaults(func=cmd_sources)
 
-    a = sub.add_parser("auth", help="one-time browser sign-in for Outlook / Microsoft 365 email connectors")
-    a.add_argument("name", nargs="?", help="connector name (default: every enabled outlook connector)")
+    a = sub.add_parser("auth", help="one-time browser sign-in for Outlook / Microsoft 365 mail and calendar connectors")
+    a.add_argument("name", nargs="?", help="connector or account name (default: every enabled Outlook connector)")
     a.set_defaults(func=cmd_auth)
 
     args = parser.parse_args(argv)

@@ -1,12 +1,16 @@
-"""Outlook / Microsoft 365 email via Microsoft Graph (stdlib ``urllib``).
+"""Outlook / Microsoft 365 email and calendar via Microsoft Graph (stdlib ``urllib``).
 
 Microsoft no longer allows app passwords over IMAP, so this uses OAuth with the
 device-code flow: run ``python -m life_dashboard auth`` once, open the link it
 prints, enter the code, and sign in. The refresh token is cached locally
 (``chmod 600``) and renewed on every fetch, so scheduled runs need no browser.
 
-Read-only: the only permission requested is ``Mail.Read`` (+ ``offline_access``
-for the refresh token). Nothing is sent, moved, deleted, or marked as read.
+One sign-in covers both connectors: give ``outlook`` (mail) and ``outlook_calendar``
+the same ``account`` and they share the cached token.
+
+Read-only: the permissions requested are ``Mail.Read`` and ``Calendars.Read``
+(+ ``offline_access`` for the refresh token). Nothing is sent, moved, deleted,
+accepted, or marked as read.
 """
 from __future__ import annotations
 
@@ -21,12 +25,12 @@ from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Callable
 
-from ..models import Email
+from ..models import Email, Event
 from .base import Connector, ConnectorError, register
 
 LOGIN = "https://login.microsoftonline.com/{tenant}/oauth2/v2.0/{endpoint}"
 GRAPH = "https://graph.microsoft.com/v1.0"
-SCOPES = "offline_access Mail.Read"
+SCOPES = "offline_access Mail.Read Calendars.Read"
 DEVICE_GRANT = "urn:ietf:params:oauth:grant-type:device_code"
 SELECT = "subject,from,receivedDateTime,bodyPreview,isRead,flag"
 
@@ -47,7 +51,7 @@ def _request(url: str, data: dict | None = None, token: str | None = None, timeo
         headers["Content-Type"] = "application/x-www-form-urlencoded"
     if token:
         headers["Authorization"] = f"Bearer {token}"
-        headers["Prefer"] = 'outlook.body-content-type="text"'
+        headers["Prefer"] = 'outlook.body-content-type="text", outlook.timezone="UTC"'
     req = urllib.request.Request(url, data=body, headers=headers)
     try:
         with urllib.request.urlopen(req, timeout=timeout) as resp:
@@ -60,6 +64,8 @@ def _request(url: str, data: dict | None = None, token: str | None = None, timeo
         if isinstance(err.get("error"), dict):  # Graph style: {"error": {"code", "message"}}
             raise OAuthError(err["error"].get("code", str(exc.code)), err["error"].get("message", "")) from exc
         raise OAuthError(err.get("error", str(exc.code)), err.get("error_description", "").split("\r\n")[0]) from exc
+    except urllib.error.URLError as exc:
+        raise ConnectorError(f"can't reach {urllib.parse.urlsplit(url).netloc}: {exc.reason}") from exc
 
 
 def parse_messages(payload: dict, source: str, tz) -> list[Email]:
@@ -85,15 +91,39 @@ def parse_messages(payload: dict, source: str, tz) -> list[Email]:
     return out
 
 
-@register
-class OutlookEmail(Connector):
-    """``type = "outlook"`` — options: ``client_id`` (or ``client_id_env``), ``tenant``
-    (``common`` | ``consumers`` | ``organizations`` | a tenant id; default ``common``),
-    ``folder`` (inbox), ``days`` (2), ``unread_only`` (true), ``limit`` (25),
-    ``token_cache`` (default ``~/.config/life-dashboard/outlook-<name>.json``)."""
+def parse_calendar(payload: dict, source: str, tz) -> list[Event]:
+    """Map Graph ``calendarView`` items (times requested in UTC) to events."""
+    out = []
+    for e in payload.get("value", []):
+        if e.get("isCancelled"):
+            continue
+        try:
+            start = datetime.fromisoformat(e["start"]["dateTime"][:19]).replace(tzinfo=timezone.utc).astimezone(tz)
+            end = datetime.fromisoformat(e["end"]["dateTime"][:19]).replace(tzinfo=timezone.utc).astimezone(tz)
+        except (KeyError, TypeError, ValueError):
+            continue
+        all_day = bool(e.get("isAllDay"))
+        if all_day:  # all-day events are midnight-to-midnight in the event's own zone; keep the dates
+            start = datetime.combine(datetime.fromisoformat(e["start"]["dateTime"][:10]).date(), datetime.min.time(), tz)
+            end = datetime.combine(datetime.fromisoformat(e["end"]["dateTime"][:10]).date(), datetime.min.time(), tz)
+        join = (e.get("onlineMeeting") or {}).get("joinUrl", "")
+        location = (e.get("location") or {}).get("displayName", "")
+        out.append(
+            Event(
+                title=e.get("subject") or "(no title)",
+                start=start,
+                end=end,
+                all_day=all_day,
+                location=location or ("Online meeting" if join else ""),
+                description=join,
+                source=source,
+            )
+        )
+    return out
 
-    type = "outlook"
-    kind = "email"
+
+class _GraphConnector(Connector):
+    """Shared Microsoft sign-in for the Outlook mail and calendar connectors."""
 
     # -- config -----------------------------------------------------------
     @property
@@ -110,7 +140,8 @@ class OutlookEmail(Connector):
     def token_cache(self) -> Path:
         if self.options.get("token_cache"):
             return self.config.resolve(self.options["token_cache"])
-        slug = re.sub(r"[^a-z0-9]+", "-", self.name.lower()).strip("-") or "outlook"
+        account = str(self.options.get("account") or self.name)
+        slug = re.sub(r"[^a-z0-9]+", "-", account.lower()).strip("-") or "outlook"
         return Path("~/.config/life-dashboard").expanduser() / f"outlook-{slug}.json"
 
     def _url(self, endpoint: str) -> str:
@@ -165,7 +196,19 @@ class OutlookEmail(Connector):
             self._save(tokens)
         return tokens["access_token"]
 
-    # -- fetch ------------------------------------------------------------
+
+
+@register
+class OutlookEmail(_GraphConnector):
+    """``type = "outlook"`` — options: ``client_id`` (or ``client_id_env``), ``tenant``
+    (``common`` | ``consumers`` | ``organizations`` | a tenant id; default ``common``),
+    ``account`` (shares the sign-in with an ``outlook_calendar`` of the same account),
+    ``folder`` (inbox), ``days`` (2), ``unread_only`` (true), ``limit`` (25),
+    ``token_cache`` (default ``~/.config/life-dashboard/outlook-<account or name>.json``)."""
+
+    type = "outlook"
+    kind = "email"
+
     def fetch(self, day: date) -> list[Email]:
         token = self.access_token()
         start = datetime.combine(day - timedelta(days=int(self.option("days", 2))), datetime.min.time(),
@@ -181,3 +224,30 @@ class OutlookEmail(Connector):
         except OAuthError as exc:
             raise ConnectorError(f"{self.name}: Microsoft Graph error {exc}") from exc
         return parse_messages(payload, self.name, self.config.tz)
+
+
+@register
+class OutlookCalendar(_GraphConnector):
+    """``type = "outlook_calendar"`` — same options as ``outlook`` for signing in, plus
+    ``calendar_id`` (default: your main calendar). Teams meetings come with their join link."""
+
+    type = "outlook_calendar"
+    kind = "calendar"
+
+    def fetch(self, day: date) -> list[Event]:
+        token = self.access_token()
+        start = datetime.combine(day, datetime.min.time(), self.config.tz).astimezone(timezone.utc)
+        end = start + timedelta(days=1)
+        query = urllib.parse.urlencode({
+            "startDateTime": start.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "endDateTime": end.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "$select": "subject,start,end,isAllDay,location,onlineMeeting,isCancelled",
+            "$orderby": "start/dateTime", "$top": 100,
+        })
+        cal = self.option("calendar_id")
+        path = f"/me/calendars/{urllib.parse.quote(cal)}/calendarView" if cal else "/me/calendarView"
+        try:
+            payload = _request(f"{GRAPH}{path}?{query}", token=token)
+        except OAuthError as exc:
+            raise ConnectorError(f"{self.name}: Microsoft Graph error {exc}") from exc
+        return parse_calendar(payload, self.name, self.config.tz)

@@ -105,7 +105,7 @@ footer{color:var(--muted);font-size:12px;margin-top:20px;text-align:center}
       <li data-start="{{ e.start.isoformat() }}" data-end="{{ e.end.isoformat() }}"{% if not e.all_day %} class="ev"{% endif %}>
         <span class="time">{{ e.time_label }}</span>
         <span><span class="title">{{ e.title }}</span>{% if e.conflict %}<span class="pill bad">conflict</span>{% endif %}
-        {% if e.location %}<br><span class="meta">{{ e.location }}</span>{% endif %}</span>
+        {% if e.location or e.join_url %}<br><span class="meta">{{ e.location }}{% if e.join_url %} · <a href="{{ e.join_url }}" target="_blank" rel="noopener">Join</a>{% endif %}</span>{% endif %}</span>
       </li>
     {% endfor %}
     </ul>

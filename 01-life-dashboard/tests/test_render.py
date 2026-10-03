@@ -83,3 +83,16 @@ def test_config_file_loading(tmp_path, monkeypatch):
     assert cfg.timezone == "Europe/Paris" and cfg.model == "claude-sonnet-5-5"
     assert cfg.output_dir == tmp_path / "site" and cfg.vault_path.name == "vault"
     assert [c["type"] for c in cfg.connectors] == ["ics"] and cfg.links[0]["name"] == "GitHub"
+
+
+def test_online_meeting_join_link(config, day):
+    from life_dashboard.models import Event
+
+    data = collect(config, day)
+    start = data.generated_at.replace(hour=10, minute=0)
+    data.events.append(Event("Oculi board prep", start, start, location="Online meeting",
+                             description="https://teams.microsoft.com/l/meetup-join/x"))
+    data.events.append(Event("Bad link", start, start, description="javascript:alert(1)"))
+    html = render_html(data, template_briefing(data))
+    assert '<a href="https://teams.microsoft.com/l/meetup-join/x"' in html
+    assert "javascript:alert" not in html

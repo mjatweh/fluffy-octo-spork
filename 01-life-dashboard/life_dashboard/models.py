@@ -18,6 +18,12 @@ class Event:
     conflict: bool = False
 
     @property
+    def join_url(self) -> str:
+        """Online-meeting link (Teams/Zoom) when the description is just an https URL."""
+        d = self.description.strip()
+        return d if d.startswith("https://") and " " not in d and "\n" not in d else ""
+
+    @property
     def time_label(self) -> str:
         if self.all_day:
             return "All day"
