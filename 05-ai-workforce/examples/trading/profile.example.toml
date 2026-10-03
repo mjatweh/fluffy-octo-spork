@@ -1,0 +1,11 @@
+# Copy to <workspace>/trading/profile.toml (or $TRADING_DIR/profile.toml). That folder is gitignored.
+risk_tolerance = "moderate"     # conservative | moderate | aggressive
+horizon_years = 3
+max_position_pct = 10.0         # largest single position, % of the portfolio
+max_speculative_pct = 20.0      # total in high-risk / speculative ideas
+stop_loss_pct = 15.0            # default stop distance suggested for new ideas
+notes = "Long-term growth; fine with volatility; no options or leverage."
+
+# Optional: override Quiver Quant endpoint paths if their API changes
+# [quiver]
+# congress = "/historical/congresstrading/{ticker}"

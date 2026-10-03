@@ -107,6 +107,9 @@ def build_registry() -> ToolRegistry:
         Slack/Discord/other webhook (WORKFORCE_WEBHOOK_URL or NOTIFY_WEBHOOK_URL)."""
         return deliver_message(text, channel)
 
+    from .trading import register_trading_tools
+
+    register_trading_tools(reg)
     return reg
 
 

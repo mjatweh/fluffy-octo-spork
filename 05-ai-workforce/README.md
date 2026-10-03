@@ -114,6 +114,7 @@ Tool exceptions, invalid inputs and unknown tools go back to the model as `is_er
 | `sales_outreach` | Sales & Outreach | ICP, lead lists, outreach sequences, follow-ups | analyze_csv, files, search_knowledge, send_message† |
 | `ops_analyst` | Operations & Finance Analyst | KPIs, revenue, margins and pipeline from CSVs | analyze_csv, list/read/write files |
 | `knowledge_manager` | Knowledge Manager | Retrieves and files notes, decisions and SOPs in the Second Brain | search_knowledge, read_note, write_note†, upcoming_dates |
+| `trading_analyst` | Trading Analyst | Portfolio review and trade ideas sized to your risk profile. **Analysis only: it has no tool that can trade.** | risk_profile, portfolio_snapshot, technical_signals, smart_money_signals, check_trade_idea, web_fetch, files |
 
 Put CSVs (e.g. `revenue.csv`, `leads.csv`) in `workspace/`, then try `run --playbook weekly-business-review`.
 
@@ -145,6 +146,30 @@ def stock_price(ctx: ToolContext, ticker: str) -> dict:
 ```
 
 Then list `"stock_price"` in an agent's `tools`. Set `side_effect=True` for anything that changes the outside world. That puts the tool behind the approval gate and makes dry-run skip it automatically. At startup the team checks that every tool named in the roster exists.
+
+## Trading analyst
+
+The Trading Analyst reviews your portfolio and proposes ideas. Each idea comes with a thesis, the signals
+behind it, size as % of the portfolio, an entry zone, a stop and the main risk, and is checked against
+your position limits. It can't place, change or cancel orders: no such tool exists, and a test makes sure
+none is added. You trade in your own apps.
+
+Everything lives in the trading folder, `workspace/trading/` by default or `$TRADING_DIR`. Both are kept
+out of git.
+
+| File | What it is |
+|---|---|
+| `profile.toml` | Risk tolerance, horizon, max position %, max speculative %, default stop. Start from `examples/trading/profile.example.toml`. |
+| Revolut statement CSVs | Export your trading account statement from the Revolut app as Excel/CSV and drop it in the folder. Open positions are rebuilt from the buys, sells and splits. |
+| `holdings.csv` | Anything without an export, such as Autopilot: `account,ticker,shares,cost_basis`. |
+| `watchlist.txt` | Optional tickers to scan besides your holdings, one per line. |
+
+Data sources:
+- **Prices and technicals** (1d/5d/1m/3m change, SMA50/200, RSI14, trend, 52-week range): Stooq's free daily CSV, no key needed. Set `PRICE_CSV_URL` to use another source with the same CSV columns.
+- **Politician, insider and 13F signals**: the [Quiver Quant](https://www.quiverquant.com) API. Set `QUIVER_API_TOKEN`; without it, the analyst says those signals are unavailable.
+
+Run `python -m workforce run --playbook trading-review`, or `ask trading_analyst "..."`, for example in a
+weekly cron.
 
 ## Safety model
 

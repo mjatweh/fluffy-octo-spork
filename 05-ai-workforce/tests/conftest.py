@@ -16,7 +16,8 @@ def isolated_env(tmp_path, monkeypatch):
     monkeypatch.setenv("WORKFORCE_WORKSPACE", str(tmp_path / "ws"))
     monkeypatch.setenv("WORKFORCE_RUNS_DIR", str(tmp_path / "runs"))
     monkeypatch.setenv("WORKFORCE_KNOWLEDGE", "local")
-    for var in ("VAULT_PATH", "CLAUDE_MODEL", "WORKFORCE_WEBHOOK_URL", "WORKFORCE_ROSTER"):
+    for var in ("VAULT_PATH", "CLAUDE_MODEL", "WORKFORCE_WEBHOOK_URL", "WORKFORCE_ROSTER", "TRADING_DIR",
+                "QUIVER_API_TOKEN", "TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID", "NOTIFY_WEBHOOK_URL"):
         monkeypatch.delenv(var, raising=False)
     (tmp_path / "ws").mkdir()
     return tmp_path
