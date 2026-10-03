@@ -1,0 +1,9 @@
+[
+  {"title": "Finish Q1 roadmap deck", "due_in_days": 0, "priority": "urgent", "project": "work"},
+  {"title": "Review pricing doc for Priya", "due_in_days": 0, "priority": "high", "project": "work"},
+  {"title": "Submit December expenses", "due_in_days": 4, "priority": "normal", "project": "admin"},
+  {"title": "Renew car registration", "due_in_days": -2, "priority": "high", "project": "personal"},
+  {"title": "Call Mom for her birthday", "due_in_days": 0, "priority": "high", "project": "personal"},
+  {"title": "Draft launch brief", "due_in_days": 1, "priority": "normal", "project": "work"},
+  {"title": "Read 'Shape Up' chapter 4", "priority": "low", "project": "learning"}
+]

@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "life-dashboard"
+version = "1.0.0"
+description = "Calendar, email, tasks and connected tools on one page, with a daily Claude-written briefing."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = ["anthropic>=1.11", "jinja2>=3.1"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.scripts]
+life-dashboard = "life_dashboard.cli:main"
+
+[tool.setuptools]
+packages = ["life_dashboard", "life_dashboard.connectors"]
+
+[tool.setuptools.package-data]
+life_dashboard = ["templates/*.j2"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

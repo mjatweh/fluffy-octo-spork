@@ -1,0 +1,9 @@
+[
+  {"from": "Priya Shah <priya@example.com>", "subject": "Can you review the pricing doc before 1:1?", "snippet": "Hey — could you take a look at the pricing doc and leave comments before our 1:1 today? Mainly section 3.", "hours_ago": 2, "unread": true, "flagged": true},
+  {"from": "Jordan Lee <jordan@acme-analytics.com>", "subject": "Demo today at 1:15 — agenda attached", "snippet": "Looking forward to the demo. Could you confirm who else from your team is joining?", "hours_ago": 14, "unread": true},
+  {"from": "Finance Team <finance@example.com>", "subject": "Action required: submit December expenses by Friday", "snippet": "Reminder that December expense reports are due this Friday. Please submit receipts in the portal.", "hours_ago": 20, "unread": true},
+  {"from": "GitHub <noreply@github.com>", "subject": "[repo] 3 new pull request reviews requested", "snippet": "You have been requested to review: #482 Add caching layer, #487 Fix login redirect, #490 Bump deps.", "hours_ago": 5, "unread": true},
+  {"from": "Sam Rivera <sam@example.com>", "subject": "Lunch — still on for noon?", "snippet": "Still good for noon at Café Luna? Let me know if you need to push.", "hours_ago": 9, "unread": true},
+  {"from": "The Morning Newsletter <news@newsletter.example>", "subject": "Your weekly digest", "snippet": "Top stories this week in tech and design...", "hours_ago": 3, "unread": true},
+  {"from": "Alex Kim <alex@example.com>", "subject": "Re: Launch brief outline", "snippet": "Thanks, this looks good. I added two comments on the risks section.", "hours_ago": 30, "unread": false}
+]

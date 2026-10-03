@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="life-dashboard">
+<title>Life Dashboard — {{ d.day.strftime('%a %b') }} {{ d.day.day }}</title>
+<style>
+:root{
+  --bg:#f6f7f9;--card:#ffffff;--text:#1d2330;--muted:#667085;--line:#e4e7ec;
+  --accent:#4f46e5;--accent-soft:#eef0ff;--warn:#b54708;--warn-soft:#fff4e5;
+  --bad:#c0262d;--bad-soft:#fdecec;--ok:#067647;--ok-soft:#e7f6ec;
+  --shadow:0 1px 2px rgba(16,24,40,.05),0 1px 3px rgba(16,24,40,.08);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1218;--card:#171b23;--text:#e6e8ee;--muted:#98a2b3;--line:#272d38;
+  --accent:#8b8cff;--accent-soft:#23254a;--warn:#f5a54a;--warn-soft:#3a2a14;
+  --bad:#f97066;--bad-soft:#3d1c1c;--ok:#47cd89;--ok-soft:#133224;--shadow:none;}}
+:root[data-theme="dark"]{
+  --bg:#0f1218;--card:#171b23;--text:#e6e8ee;--muted:#98a2b3;--line:#272d38;
+  --accent:#8b8cff;--accent-soft:#23254a;--warn:#f5a54a;--warn-soft:#3a2a14;
+  --bad:#f97066;--bad-soft:#3d1c1c;--ok:#47cd89;--ok-soft:#133224;--shadow:none;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:20px}
+h1{font-size:28px;margin:0;letter-spacing:-.02em}
+.sub{color:var(--muted);margin:4px 0 0}
+button.theme{border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:999px;padding:6px 12px;cursor:pointer;font:inherit;font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;box-shadow:var(--shadow);min-width:0}
+.card h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 12px;display:flex;justify-content:space-between;align-items:center}
+.span-2{grid-column:span 2}.span-3{grid-column:span 3}
+.headline{font-size:20px;font-weight:650;margin:0 0 6px;letter-spacing:-.01em}
+.summary{margin:0 0 14px}
+.cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 24px}
+.cols h3{font-size:14px;margin:10px 0 4px}
+ul{margin:0;padding-left:18px}li{margin:3px 0}
+ol.prio{margin:0;padding-left:20px}ol.prio li::marker{color:var(--accent);font-weight:700}
+.tip{margin-top:14px;padding:10px 12px;border-radius:10px;background:var(--accent-soft)}
+.risk li{color:var(--warn)}
+.list{list-style:none;padding:0;margin:0}
+.list li{display:flex;gap:12px;padding:9px 0;border-top:1px solid var(--line);margin:0}
+.list li:first-child{border-top:0}
+.time{flex:0 0 92px;font-variant-numeric:tabular-nums;color:var(--muted);font-size:13px;padding-top:1px}
+.title{font-weight:560}
+.meta{color:var(--muted);font-size:13px;overflow-wrap:anywhere}
+.pill{display:inline-block;font-size:11px;font-weight:600;padding:1px 8px;border-radius:999px;margin-left:6px;vertical-align:1px;white-space:nowrap}
+.pill.bad{background:var(--bad-soft);color:var(--bad)}.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}.pill.acc{background:var(--accent-soft);color:var(--accent)}
+.now{border-left:3px solid var(--accent);padding-left:9px!important}
+.past{opacity:.55}
+.count{font-size:12px;color:var(--muted);text-transform:none;letter-spacing:0}
+.dot{width:9px;height:9px;border-radius:50%;flex:0 0 9px;margin-top:7px}
+.dot.ok{background:var(--ok)}.dot.bad{background:var(--bad)}
+.links{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.links a{color:var(--accent);text-decoration:none;border:1px solid var(--line);padding:4px 10px;border-radius:8px;font-size:13px}
+.empty{color:var(--muted);font-style:italic}
+footer{color:var(--muted);font-size:12px;margin-top:20px;text-align:center}
+@media (max-width:900px){.grid{grid-template-columns:1fr}.span-2,.span-3{grid-column:auto}.cols{grid-template-columns:1fr}}
+@media (max-width:520px){header{flex-direction:column}.time{flex-basis:72px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div>
+    <h1>{{ d.day.strftime('%A, %B') }} {{ d.day.day }}</h1>
+    <p class="sub">Generated {{ d.generated_at.strftime('%H:%M') }} · {{ d.events|length }} events · {{ d.emails|length }} emails · {{ d.tasks|length }} open tasks</p>
+  </div>
+  <button class="theme" type="button" onclick="toggleTheme()" aria-label="Toggle light/dark theme">◐ Theme</button>
+</header>
+
+<div class="grid">
+  <section class="card span-3" id="briefing">
+    <h2>Daily briefing <span class="count">{{ b.generated_by }}</span></h2>
+    <p class="headline">{{ b.headline }}</p>
+    <p class="summary">{{ b.summary }}</p>
+    <div class="cols">
+      <div>
+        <h3>Top priorities</h3>
+        {% if b.top_priorities %}<ol class="prio">{% for p in b.top_priorities %}<li>{{ p }}</li>{% endfor %}</ol>
+        {% else %}<p class="empty">Nothing urgent.</p>{% endif %}
+        <h3>Emails to reply to</h3>
+        {% if b.emails_to_reply %}<ul>{% for e in b.emails_to_reply %}<li>{{ e }}</li>{% endfor %}</ul>
+        {% else %}<p class="empty">Inbox is calm.</p>{% endif %}
+      </div>
+      <div>
+        <h3>Schedule</h3>
+        {% if b.schedule_highlights %}<ul>{% for s in b.schedule_highlights %}<li>{{ s }}</li>{% endfor %}</ul>
+        {% else %}<p class="empty">No meetings — enjoy the open day.</p>{% endif %}
+        <h3>Risks &amp; conflicts</h3>
+        {% if b.risks %}<ul class="risk">{% for r in b.risks %}<li>{{ r }}</li>{% endfor %}</ul>
+        {% else %}<p class="empty">None spotted.</p>{% endif %}
+      </div>
+    </div>
+    {% if b.focus_tip %}<div class="tip"><strong>Focus tip:</strong> {{ b.focus_tip }}</div>{% endif %}
+  </section>
+
+  <section class="card" id="schedule">
+    <h2>Today's schedule <span class="count">{{ d.events|length }}</span></h2>
+    {% if d.events %}
+    <ul class="list">
+    {% for e in d.events %}
+      <li data-start="{{ e.start.isoformat() }}" data-end="{{ e.end.isoformat() }}"{% if not e.all_day %} class="ev"{% endif %}>
+        <span class="time">{{ e.time_label }}</span>
+        <span><span class="title">{{ e.title }}</span>{% if e.conflict %}<span class="pill bad">conflict</span>{% endif %}
+        {% if e.location %}<br><span class="meta">{{ e.location }}</span>{% endif %}</span>
+      </li>
+    {% endfor %}
+    </ul>
+    {% else %}<p class="empty">No events today.</p>{% endif %}
+  </section>
+
+  <section class="card" id="inbox">
+    <h2>Inbox highlights <span class="count">{{ d.needs_reply|length }} need reply</span></h2>
+    {% if d.emails %}
+    <ul class="list">
+    {% for m in d.emails %}
+      <li>
+        <span><span class="title">{{ m.subject }}</span>{% if m.needs_reply %}<span class="pill warn">reply</span>{% endif %}{% if m.flagged %}<span class="pill acc">flagged</span>{% endif %}
+        <br><span class="meta">{{ m.sender }} · {{ m.received.strftime('%a %H:%M') }}</span>
+        {% if m.snippet %}<br><span class="meta">{{ m.snippet|truncate(120) }}</span>{% endif %}</span>
+      </li>
+    {% endfor %}
+    </ul>
+    {% else %}<p class="empty">No new email.</p>{% endif %}
+  </section>
+
+  <section class="card" id="tasks">
+    <h2>Tasks <span class="count">{{ d.tasks|length }} open</span></h2>
+    {% if d.tasks %}
+    <ul class="list">
+    {% for t in d.tasks %}
+      <li>
+        <span><span class="title">{{ t.title }}</span>
+        {% if t.overdue %}<span class="pill bad">overdue</span>{% elif t.due_today %}<span class="pill warn">today</span>{% endif %}
+        {% if t.priority <= 2 %}<span class="pill acc">{{ t.priority_label }}</span>{% endif %}
+        <br><span class="meta">{% if t.due %}Due {{ t.due.strftime('%a %b') }} {{ t.due.day }}{% else %}No due date{% endif %}{% if t.project %} · {{ t.project }}{% endif %}</span></span>
+      </li>
+    {% endfor %}
+    </ul>
+    {% else %}<p class="empty">All clear.</p>{% endif %}
+  </section>
+
+  <section class="card span-3" id="tools">
+    <h2>Connected tools <span class="count">{{ d.statuses|selectattr('ok')|list|length }}/{{ d.statuses|length }} healthy</span></h2>
+    <ul class="list cols">
+    {% for s in d.statuses %}
+      <li><span class="dot {{ 'ok' if s.ok else 'bad' }}"></span>
+        <span><span class="title">{{ s.name }}</span> <span class="meta">{{ s.type }} · {{ s.kind }}</span>
+        <br><span class="meta">{% if s.ok %}{{ s.count }} item{{ 's' if s.count != 1 }} · {{ s.elapsed_ms }} ms{% else %}{{ s.message }}{% endif %}</span></span>
+      </li>
+    {% endfor %}
+    </ul>
+    {% if d.links %}<div class="links">{% for l in d.links %}<a href="{{ l.url }}" target="_blank" rel="noopener">{{ l.name }}</a>{% endfor %}</div>{% endif %}
+  </section>
+</div>
+<footer>{{ note }} · life-dashboard</footer>
+</div>
+<script>
+(function(){
+  try{var t=localStorage.getItem('ld-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}
+  window.toggleTheme=function(){
+    var root=document.documentElement,cur=root.getAttribute('data-theme')||
+      (matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+    var next=cur==='dark'?'light':'dark';root.setAttribute('data-theme',next);
+    try{localStorage.setItem('ld-theme',next);}catch(e){}
+  };
+  // highlight the current meeting, dim past ones
+  var now=new Date();
+  document.querySelectorAll('li.ev').forEach(function(li){
+    var s=new Date(li.dataset.start),e=new Date(li.dataset.end);
+    if(e<now)li.classList.add('past');else if(s<=now)li.classList.add('now');
+  });
+})();
+</script>
+</body>
+</html>
