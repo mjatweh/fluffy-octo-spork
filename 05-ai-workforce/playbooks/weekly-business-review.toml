@@ -1,0 +1,15 @@
+title = "Weekly business review"
+description = "Numbers, pipeline, content and priorities for the week ahead."
+
+goal = """
+Run the weekly business review for {week}.
+- Operations & Finance Analyst: analyze {data}; revenue, costs, margin, pipeline and trends vs last week.
+- Sales & Outreach: pipeline status, stalled deals and follow-ups due.
+- Content Marketer: what shipped, what performed, next week's content calendar.
+- Executive Assistant: upcoming deadlines and a time-blocked plan for next week's top 3 priorities.
+Final report: scorecard table, 3 wins, 3 problems, decisions needed, and next week's top 3 priorities.
+"""
+
+[vars]
+week = "this week"
+data = "revenue.csv and leads.csv in the workspace (if present)"

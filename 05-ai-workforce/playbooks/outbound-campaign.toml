@@ -1,0 +1,17 @@
+title = "Outbound campaign for ICP"
+description = "Define the ICP, build a lead list and write a personalized outbound sequence."
+
+goal = """
+Design an outbound campaign selling {offer} to {icp}.
+- Researcher: sharpen the ICP (triggers, pains, where they hang out) and list sources for {volume}.
+- Sales & Outreach: build/clean the lead list (use leads.csv if present), write a 3-step email sequence
+  plus a LinkedIn connection note, and a follow-up cadence.
+- Content Marketer: one lead magnet idea and 2 supporting posts that warm up the audience.
+- Operations & Finance Analyst: funnel math - touches -> replies -> calls -> deals needed for the target.
+Final report: campaign brief, sequence copy, funnel targets and a 2-week execution calendar.
+"""
+
+[vars]
+icp = "owner-led B2B service firms (5-50 employees) in North America"
+offer = "a done-for-you AI workforce setup"
+volume = "50 prospects"

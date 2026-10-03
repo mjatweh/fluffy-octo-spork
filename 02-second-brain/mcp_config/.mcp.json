@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "second-brain": {
+      "type": "stdio",
+      "command": "python",
+      "args": ["-m", "second_brain", "mcp"],
+      "env": {
+        "PYTHONPATH": "/ABSOLUTE/PATH/TO/fluffy-octo-spork/02-second-brain",
+        "SECOND_BRAIN_VAULT": "/ABSOLUTE/PATH/TO/vault"
+      }
+    }
+  }
+}

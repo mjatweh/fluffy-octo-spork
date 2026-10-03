@@ -1,0 +1,113 @@
+# Life Dashboard configuration. Copy to config.toml and edit.
+# Relative paths are resolved against this file's folder; ~ is expanded.
+# Secrets are never stored here: options ending in _env name an environment
+# variable (put them in .env, which is loaded automatically).
+
+timezone = "America/New_York"   # IANA name; empty = system local time
+output_dir = "output"           # dashboard.html + briefing.md land here
+max_emails = 8                  # inbox highlights shown / sent to Claude
+
+# Second Brain integration (project 02): if set, the briefing is also written to
+# <vault_path>/Daily/YYYY-MM-DD.md (only a marked block is managed; your own notes are kept).
+# vault_path = "~/SecondBrain"
+
+[llm]
+model = "claude-opus-5-5"       # env CLAUDE_MODEL overrides this
+
+# ---- Calendars -------------------------------------------------------------
+# Any iCal feed works: Google Calendar ("Secret address in iCal format"),
+# Outlook ("Publish calendar" → ICS link), iCloud (public calendar link), or a file.
+# Better for Outlook / Microsoft 365 and iCloud: the outlook_calendar and icloud connectors below
+# (no public links; iCloud includes calendars shared with you).
+[[connectors]]
+type = "ics"
+name = "Work calendar"
+source = "https://calendar.google.com/calendar/ical/XXXX/private-XXXX/basic.ics"
+enabled = false
+
+[[connectors]]
+type = "ics"
+name = "Personal calendar"
+source = "~/calendars/personal.ics"
+enabled = false
+
+[[connectors]]
+type = "outlook_calendar"
+name = "Outlook Calendar"
+account = "outlook"            # same account as the Outlook email connector = one sign-in
+client_id_env = "OUTLOOK_CLIENT_ID"
+enabled = false
+
+[[connectors]]
+type = "icloud"
+name = "iCloud"
+username = "you@icloud.com"
+password_env = "ICLOUD_APP_PASSWORD"   # app-specific password from account.apple.com
+calendars = ["Family"]                 # names to include; omit for all
+enabled = false
+
+# ---- Email (IMAP, read-only) -----------------------------------------------
+# Gmail: enable 2FA, create an App Password, host = "imap.gmail.com".
+[[connectors]]
+type = "imap"
+name = "Gmail"
+host = "imap.gmail.com"
+username = "you@gmail.com"
+password_env = "IMAP_PASSWORD"
+mailbox = "INBOX"
+days = 2            # look back this many days
+unread_only = true
+limit = 25
+enabled = false
+
+# Outlook.com / Microsoft 365 (Microsoft Graph). One-time setup in README →
+# "Outlook / Microsoft 365 email and calendar", then run: python -m life_dashboard auth
+[[connectors]]
+type = "outlook"
+name = "Outlook"
+account = "outlook"
+client_id_env = "OUTLOOK_CLIENT_ID"
+tenant = "common"
+days = 2
+unread_only = true
+enabled = false
+
+# ---- Tasks -----------------------------------------------------------------
+# Markdown checklist (works great with an Obsidian vault: point at a todo note)
+# or JSON list. See README for the syntax.
+[[connectors]]
+type = "tasks_file"
+name = "Todo list"
+path = "sample_data/tasks.md"
+enabled = true
+
+[[connectors]]
+type = "todoist"
+name = "Todoist"
+token_env = "TODOIST_API_TOKEN"
+filter = "today | overdue"
+enabled = false
+
+# ---- Bundled sample data (handy while setting up) ---------------------------
+[[connectors]]
+type = "sample_calendar"
+name = "Sample calendar"
+enabled = true
+
+[[connectors]]
+type = "sample_email"
+name = "Sample inbox"
+enabled = true
+
+# ---- Quick links shown in the "Connected tools" panel -----------------------
+[[links]]
+name = "Gmail"
+url = "https://mail.google.com"
+
+[[links]]
+name = "Google Calendar"
+url = "https://calendar.google.com"
+
+[[links]]
+name = "GitHub"
+url = "https://github.com/notifications"

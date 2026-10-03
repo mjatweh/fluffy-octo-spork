@@ -1,0 +1,8 @@
+# Core (only needed for Claude-powered extraction / answers; offline mode needs nothing)
+anthropic>=1.11
+# Optional
+pypdf>=4        # PDF text extraction (PDFs are still linked without it)
+mcp>=1.2        # `python -m second_brain mcp` server for Claude Desktop / Claude Code
+pyyaml>=6       # more forgiving frontmatter parsing for hand-written notes (built-in parser otherwise)
+# Dev
+pytest>=8

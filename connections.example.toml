@@ -1,0 +1,130 @@
+# Your calendars, email and tasks — set up ONCE for all five projects.
+# Copy to connections.toml (same folder; gitignored) and fill in.
+#
+#  - The Life Dashboard reads it directly (it is found automatically).
+#  - The Executive Assistant and AI Workforce agents get the same data by running
+#    the dashboard, and the briefing lands in your vault's Daily/ note.
+#
+# Passwords and tokens are NOT stored here: *_env options name a variable in ../.env.
+# Relative paths below are resolved against this folder.
+
+timezone = "America/New_York"          # your IANA time zone, e.g. "Europe/London", "Asia/Dubai"
+output_dir = "01-life-dashboard/output"
+max_emails = 8
+# vault_path defaults to VAULT_PATH from .env
+
+# ============================ CALENDARS =====================================
+# Paste each calendar's private iCal (.ics) link. Add a [[connectors]] block per calendar.
+
+# Google Calendar → Settings → click the calendar → "Integrate calendar" →
+# "Secret address in iCal format"
+[[connectors]]
+type = "ics"
+name = "Google Calendar"
+source = "https://calendar.google.com/calendar/ical/YOUR_ID/private-YOUR_SECRET/basic.ics"
+enabled = false
+
+# Outlook / Microsoft 365 calendar (Teams meetings come with their Join link).
+# Uses the same one-time Microsoft sign-in as the Outlook email below: keep the same `account`.
+[[connectors]]
+type = "outlook_calendar"
+name = "Outlook Calendar"
+account = "outlook"
+client_id_env = "OUTLOOK_CLIENT_ID"
+tenant = "common"
+enabled = false
+
+# iCloud calendars through your own Apple ID: includes calendars other people share
+# with you (e.g. a family calendar someone else owns), and nothing is made public.
+# Create an app-specific password at account.apple.com → Sign-In and Security, put it in
+# .env as ICLOUD_APP_PASSWORD. List the calendars to include by name (omit = all).
+[[connectors]]
+type = "icloud"
+name = "iCloud"
+username = "you@icloud.com"            # your Apple ID email
+password_env = "ICLOUD_APP_PASSWORD"
+calendars = ["Family"]
+enabled = false
+
+# =============================== EMAIL ======================================
+# Read-only: nothing is sent, deleted, or marked as read.
+#
+# Every email connector also takes:
+#   group = "Work"                      section it appears under on the dashboard and in the
+#                                       briefing (default: the connector name)
+#   work_reply_from = "you@company.com" for a personal inbox that still gets work mail:
+#   work_domains = ["client.com"]       mail from these domains / addresses is flagged "work"
+#   work_senders = ["a@gmail.com"]      with a nudge to reply from work_reply_from, so people
+#                                       learn your work address. Claude also spots other work mail.
+
+# Gmail: turn on 2-Step Verification, create an App Password, put it in .env as GMAIL_APP_PASSWORD
+[[connectors]]
+type = "imap"
+name = "Gmail"
+group = "Personal"
+host = "imap.gmail.com"
+username = "you@gmail.com"
+password_env = "GMAIL_APP_PASSWORD"
+# work_reply_from = "you@company.com"
+# work_domains = ["company.com", "client.com"]
+days = 2
+unread_only = true
+limit = 25
+enabled = false
+
+# iCloud Mail: create an app-specific password at account.apple.com → Sign-In and Security
+[[connectors]]
+type = "imap"
+name = "iCloud Mail"
+host = "imap.mail.me.com"
+username = "you@icloud.com"
+password_env = "ICLOUD_APP_PASSWORD"
+enabled = false
+
+# Yahoo Mail: Account security → Generate app password
+[[connectors]]
+type = "imap"
+name = "Yahoo Mail"
+host = "imap.mail.yahoo.com"
+username = "you@yahoo.com"
+password_env = "YAHOO_APP_PASSWORD"
+enabled = false
+
+# Outlook.com / Microsoft 365: Microsoft no longer accepts app passwords, so this
+# signs in through the browser once (covers the Outlook Calendar above too). Register a free app first (01-life-dashboard/README.md →
+# "Outlook / Microsoft 365 email and calendar"), put its Application (client) ID in .env as
+# OUTLOOK_CLIENT_ID, then run:  cd 01-life-dashboard && python -m life_dashboard auth
+[[connectors]]
+type = "outlook"
+name = "Outlook"
+account = "outlook"      # same account as the Outlook Calendar above = one sign-in for both
+client_id_env = "OUTLOOK_CLIENT_ID"
+tenant = "common"        # "consumers" = personal only, "organizations" = work/school only
+days = 2
+unread_only = true
+enabled = false
+
+# =============================== TASKS ======================================
+# A Markdown checklist, e.g. a "Todo" note in your Obsidian vault
+[[connectors]]
+type = "tasks_file"
+name = "Todo list"
+path = "~/SecondBrain/Todo.md"
+enabled = false
+
+# Todoist: Settings → Integrations → Developer → API token → .env TODOIST_API_TOKEN
+[[connectors]]
+type = "todoist"
+name = "Todoist"
+token_env = "TODOIST_API_TOKEN"
+filter = "today | overdue"
+enabled = false
+
+# ========================= QUICK LINKS on the dashboard =====================
+[[links]]
+name = "Gmail"
+url = "https://mail.google.com"
+
+[[links]]
+name = "Google Calendar"
+url = "https://calendar.google.com"

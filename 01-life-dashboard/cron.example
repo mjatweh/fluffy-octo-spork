@@ -1,0 +1,10 @@
+# Life Dashboard — rebuild the dashboard + briefing every morning at 07:00.
+# Generate a version with your real paths:  python -m life_dashboard schedule --time 07:00
+# Install: crontab -e   (then paste the lines below, adjusted)
+#
+# CRON_TZ works with cronie/most Linux crons; on macOS prefer the launchd plist
+# (python -m life_dashboard schedule --format launchd). Your machine must be awake.
+# Secrets: put ANTHROPIC_API_KEY etc. in /path/to/01-life-dashboard/.env (auto-loaded).
+
+CRON_TZ=America/New_York
+0 7 * * * cd /path/to/fluffy-octo-spork/01-life-dashboard && mkdir -p output && /usr/bin/python3 -m life_dashboard build --quiet >> output/build.log 2>&1

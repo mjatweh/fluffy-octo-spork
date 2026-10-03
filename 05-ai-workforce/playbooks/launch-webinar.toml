@@ -1,0 +1,17 @@
+title = "Launch a webinar"
+description = "Plan, promote and fill a lead-generating webinar."
+
+goal = """
+Launch a webinar on "{topic}" happening {date}. Target: {target}.
+- Researcher: audience pain points, 2-3 competing webinars and what to do differently.
+- Content Marketer: title options, landing-page copy, 3 promo posts and a 3-email invite sequence.
+- Sales & Outreach: list of partner/audience segments to invite + personal invite template.
+- Executive Assistant: prep timeline with milestones and calendar holds (dry-run rehearsal, go-live).
+- Knowledge Manager: find past webinar notes/learnings and file the final plan.
+Final report: launch checklist with owners and dates, plus decisions I need to make.
+"""
+
+[vars]
+topic = "How small businesses use AI agents to save 10 hours a week"
+date = "in 3 weeks"
+target = "150 registrations"

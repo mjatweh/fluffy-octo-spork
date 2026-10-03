@@ -1,0 +1,4 @@
+# Runtime: only needed for live Claude calls (dry-run/offline mode needs nothing).
+anthropic>=1.11
+# Tests
+pytest>=8
