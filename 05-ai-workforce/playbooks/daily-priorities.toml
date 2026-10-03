@@ -1,0 +1,12 @@
+title = "Daily priorities"
+description = "Turn today's calendar, deadlines and notes into a focused plan."
+
+goal = """
+Build my plan for today with a focus on {focus}.
+- Executive Assistant: check deadlines and today's schedule; propose time blocks for the top 3 priorities.
+- Knowledge Manager: surface notes, open loops and reminders relevant to today.
+Final report: top 3 priorities, time-blocked schedule, things to delegate or drop.
+"""
+
+[vars]
+focus = "revenue-generating work"
