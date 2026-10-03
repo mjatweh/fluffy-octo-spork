@@ -12,7 +12,7 @@ from .briefing import generate_briefing
 from .config import Config
 from .connectors import build_connector
 from .models import DayData, Email, Event, SourceStatus, Task
-from .normalize import normalize_emails, normalize_events, normalize_tasks
+from .normalize import normalize_emails, normalize_events, normalize_tasks, tag_emails
 from .render import render_html, render_markdown, write_vault_note
 
 log = logging.getLogger(__name__)
@@ -31,6 +31,8 @@ def collect(config: Config, day: date) -> DayData:
             connector = build_connector(options, config)
             kind = connector.kind
             items = connector.fetch(day)
+            if kind == "email":
+                tag_emails(items, options, name)
             buckets[kind].extend(items)
             status = SourceStatus(name, ctype, kind, ok=True, count=len(items))
         except Exception as exc:  # one broken source must not break the dashboard

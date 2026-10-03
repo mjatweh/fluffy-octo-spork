@@ -47,15 +47,26 @@ calendars = ["Family"]
 enabled = false
 
 # =============================== EMAIL ======================================
-# Read-only IMAP: nothing is sent, deleted, or marked as read.
+# Read-only: nothing is sent, deleted, or marked as read.
+#
+# Every email connector also takes:
+#   group = "Work"                      section it appears under on the dashboard and in the
+#                                       briefing (default: the connector name)
+#   work_reply_from = "you@company.com" for a personal inbox that still gets work mail:
+#   work_domains = ["client.com"]       mail from these domains / addresses is flagged "work"
+#   work_senders = ["a@gmail.com"]      with a nudge to reply from work_reply_from, so people
+#                                       learn your work address. Claude also spots other work mail.
 
 # Gmail: turn on 2-Step Verification, create an App Password, put it in .env as GMAIL_APP_PASSWORD
 [[connectors]]
 type = "imap"
 name = "Gmail"
+group = "Personal"
 host = "imap.gmail.com"
 username = "you@gmail.com"
 password_env = "GMAIL_APP_PASSWORD"
+# work_reply_from = "you@company.com"
+# work_domains = ["company.com", "client.com"]
 days = 2
 unread_only = true
 limit = 25

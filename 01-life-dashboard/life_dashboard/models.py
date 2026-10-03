@@ -44,6 +44,8 @@ class Email:
     flagged: bool = False
     needs_reply: bool = False
     source: str = ""
+    group: str = ""  # inbox section, e.g. "Work" / "Personal" (connector option `group`)
+    reply_from: str = ""  # set when work mail lands in a personal inbox: the address to answer from
 
 
 PRIORITY_LABELS = {1: "urgent", 2: "high", 3: "normal", 4: "low"}
@@ -110,6 +112,14 @@ class DayData:
     @property
     def needs_reply(self) -> list[Email]:
         return [e for e in self.emails if e.needs_reply]
+
+    @property
+    def email_groups(self) -> list[tuple[str, list[Email]]]:
+        """Emails per inbox group, in first-seen (config) order."""
+        groups: dict[str, list[Email]] = {}
+        for m in self.emails:
+            groups.setdefault(m.group, []).append(m)
+        return list(groups.items())
 
     def to_prompt_dict(self) -> dict[str, Any]:
         """Compact, JSON-serializable view handed to the LLM."""

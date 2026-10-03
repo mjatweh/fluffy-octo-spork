@@ -90,6 +90,7 @@ down) it shows red in **Connected tools**, Claude is told it's unavailable, and 
 | `type` | Kind | Options | Notes |
 |---|---|---|---|
 | `ics` | calendar | `source` (path, `https://` or `webcal://`) | Google, Outlook and iCloud all publish a private iCal URL, so no OAuth is needed. Handles TZID/UTC/floating times, all-day and multi-day events, RRULE (DAILY/WEEKLY/MONTHLY/YEARLY, INTERVAL, BYDAY, UNTIL, COUNT), EXDATE, RECURRENCE-ID overrides and cancelled events. |
+| *(any email connector)* | email | `group`, `work_reply_from`, `work_domains`, `work_senders` | See "Inbox groups and work routing" below. |
 | `imap` | email | `host`, `username`, `password_env`, `mailbox`, `days`, `unread_only`, `limit`, `port` | Stdlib `imaplib`, read-only (`BODY.PEEK`, so nothing gets marked as read). For Gmail, use an App Password. |
 | `outlook` | email | `client_id` (or `client_id_env`), `tenant`, `folder`, `days`, `unread_only`, `limit`, `token_cache` | Outlook.com and Microsoft 365 through Microsoft Graph. Microsoft no longer accepts app passwords over IMAP, so this signs in once in the browser (see below). Read-only (`Mail.Read`). |
 | `outlook_calendar` | calendar | same sign-in options as `outlook`, plus `calendar_id` | Your Microsoft 365 / Outlook.com calendar through Graph, with Teams **Join** links. Shares the `outlook` sign-in when both have the same `account`. Read-only (`Calendars.Read`). |
@@ -109,6 +110,28 @@ Markdown task syntax:
 
 Priority comes from `!urgent|!high|!normal|!low` (or `!p1`–`!p4`) or from the Tasks emoji
 `🔺 ⏫ 🔼 🔽 ⏬`. The due date comes from `due:YYYY-MM-DD` or `📅 YYYY-MM-DD`, and the project from the first `#tag`.
+
+### Inbox groups and work routing
+
+Every email connector accepts these extra options:
+
+| Option | Effect |
+|---|---|
+| `group` | The section the inbox appears under on the dashboard and in the briefing, e.g. `"Work"`, `"Client"`, `"Personal"`. Defaults to the connector name. Sections follow the order of the connectors in your config, and `max_emails` applies to each section. |
+| `work_reply_from` | For a personal inbox that still receives work mail: the address work should come from. |
+| `work_domains`, `work_senders` | Senders whose mail in that inbox counts as work. It gets a **work** pill and a "Reply from …" nudge, so people learn your work address. Claude also points out other mail that's clearly work. |
+
+```toml
+[[connectors]]
+type = "imap"
+name = "Personal Gmail"
+group = "Personal"
+host = "imap.gmail.com"
+username = "you@gmail.com"
+password_env = "GMAIL_APP_PASSWORD"
+work_reply_from = "you@company.com"
+work_domains = ["company.com", "bigclient.com"]
+```
 
 ### Outlook / Microsoft 365 email and calendar
 
