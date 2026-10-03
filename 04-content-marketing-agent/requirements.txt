@@ -1,0 +1,4 @@
+# Runtime (only needed for live generation; --dry-run and tests work without it)
+anthropic>=1.11
+# Tests
+pytest>=8
