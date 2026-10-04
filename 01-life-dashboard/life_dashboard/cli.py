@@ -47,6 +47,14 @@ def cmd_build(args) -> int:
     if result.vault_note:
         print(f"Vault:     {result.vault_note}", file=sys.stderr)
     print(f"Briefing source: {result.note}", file=sys.stderr)
+    if getattr(args, "notify", False):
+        from .notify import NotifyError, send
+        from .render import render_phone
+
+        try:
+            print(f"Sent to {send(render_phone(result.data, result.briefing))}", file=sys.stderr)
+        except NotifyError as exc:
+            print(f"Warning: notification not sent: {exc}", file=sys.stderr)
     failed = [s.name for s in result.data.statuses if not s.ok]
     if failed:
         print(f"Warning: sources failed: {', '.join(failed)}", file=sys.stderr)
@@ -85,6 +93,35 @@ def cmd_sources(args) -> int:
         print(f"  enabled: {c.get('name', c['type'])} [{c['type']}]")
     print("Available connector types:", ", ".join(sorted(REGISTRY)))
     return 0
+
+
+def cmd_telegram(args) -> int:
+    """Find your Telegram chat id and send a test message."""
+    from .notify import NotifyError, find_chats, send_telegram
+
+    token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+    if not token:
+        print("1. In Telegram, open @BotFather, send /newbot and follow the prompts.\n"
+              "2. Put the token it gives you in .env as TELEGRAM_BOT_TOKEN=...\n"
+              "3. Send your new bot any message (e.g. 'hi'), then run this command again.")
+        return 1
+    try:
+        chat_id = os.environ.get("TELEGRAM_CHAT_ID", "")
+        if not chat_id:
+            chats = find_chats(token)
+            if not chats:
+                print("No messages found yet. Send your bot any message in Telegram, then run this again.")
+                return 1
+            for cid, name in chats:
+                print(f"Found chat: {name or '(no name)'} -> TELEGRAM_CHAT_ID={cid}")
+            chat_id = chats[0][0]
+            print(f"Add this line to .env:\nTELEGRAM_CHAT_ID={chat_id}")
+        send_telegram(token, chat_id, "Life Dashboard is connected. Your morning briefing will arrive here.")
+        print("Test message sent. Check Telegram.")
+        return 0
+    except NotifyError as exc:
+        print(f"Telegram error: {exc}", file=sys.stderr)
+        return 1
 
 
 def cmd_auth(args) -> int:
@@ -130,6 +167,8 @@ def main(argv: list[str] | None = None) -> int:
     b.add_argument("--date", help="build for YYYY-MM-DD instead of today")
     b.add_argument("--output", help="output directory (default from config: ./output)")
     b.add_argument("-q", "--quiet", action="store_true", help="don't print the briefing")
+    b.add_argument("--notify", action="store_true",
+                   help="also send the briefing to Telegram (TELEGRAM_BOT_TOKEN/CHAT_ID) or NOTIFY_WEBHOOK_URL")
     b.set_defaults(func=cmd_build)
 
     s = sub.add_parser("serve", help="serve the output folder over HTTP")
@@ -146,6 +185,8 @@ def main(argv: list[str] | None = None) -> int:
     sc.set_defaults(func=cmd_schedule)
 
     sub.add_parser("sources", help="list configured and available connectors").set_defaults(func=cmd_sources)
+
+    sub.add_parser("telegram", help="find your Telegram chat id and send a test message").set_defaults(func=cmd_telegram)
 
     a = sub.add_parser("auth", help="one-time browser sign-in for Outlook / Microsoft 365 mail and calendar connectors")
     a.add_argument("name", nargs="?", help="connector or account name (default: every enabled Outlook connector)")

@@ -1,0 +1,14 @@
+title = "Weekly deal pipeline review"
+description = "What's new, what's stuck and what needs a decision across the family office pipeline."
+
+goal = """
+Run the weekly deal pipeline review for {week}.
+- Deal Analyst: screen anything new in the inbox first, then review the pipeline: counts per stage,
+  deals with no update in 14+ days, upcoming deadlines (LOI, diligence, closing) and decisions needed.
+- Executive Assistant: put the decisions and deadlines on next week's plan.
+Final report: pipeline by stage, new this week, stuck deals with a suggested next step, decisions for
+Charles, Mark and Michael, and the top 3 deal priorities for next week.
+"""
+
+[vars]
+week = "this week"

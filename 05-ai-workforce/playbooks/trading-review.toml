@@ -1,0 +1,18 @@
+title = "Weekly trading review"
+description = "Portfolio check, market movers and smart-money signals, with ideas sized to your risk profile."
+
+goal = """
+Run the weekly trading review for {week}.
+- Trading Analyst: load the risk profile and portfolio; check technicals for every holding plus {watchlist};
+  pull Congress, insider and 13F signals for the holdings and the watchlist; list the week's biggest movers
+  among them; propose up to {max_ideas} ideas (add / trim / new / exit), each checked with check_trade_idea.
+- Researcher: for the top 3 ideas, find the latest news or filings that support or contradict the thesis.
+Final report: portfolio scorecard (value, weights, P/L, concentration), movers table, ideas table
+(action, size %, entry zone, stop, horizon, signals, main risk), and what to watch next week.
+This is analysis only: the owner places any trades.
+"""
+
+[vars]
+week = "this week"
+watchlist = "the tickers in watchlist.txt in the trading folder (if present)"
+max_ideas = "5"

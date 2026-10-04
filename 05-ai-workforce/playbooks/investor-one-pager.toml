@@ -1,0 +1,14 @@
+title = "Investor one-pager"
+description = "One-page overview of the family office for raising outside capital."
+
+goal = """
+Draft an investor one-pager for {audience}.
+- Deal Analyst: from the pipeline, memos and notes, summarize strategy, asset classes, current portfolio,
+  closed deals and returns where documented. Mark anything not documented as [to confirm]; never invent numbers.
+- Content Marketer: tighten the language for {audience}.
+Save the one-pager with save_deal_memo (kind: one-pager). Final report: the one-pager plus a list of
+[to confirm] items for the owner.
+"""
+
+[vars]
+audience = "prospective co-investors"

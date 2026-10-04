@@ -8,7 +8,7 @@ import imaplib
 import re
 from datetime import date, datetime, timedelta
 from email.header import decode_header, make_header
-from email.utils import parseaddr, parsedate_to_datetime
+from email.utils import getaddresses, parseaddr, parsedate_to_datetime
 
 from ..models import Email
 from .base import Connector, ConnectorError, register
@@ -34,8 +34,9 @@ def _text_snippet(msg: email.message.Message, limit: int = 240) -> str:
     return re.sub(r"\s+", " ", text).strip()[:limit]
 
 
-def parse_message(raw: bytes, flags: bytes, source: str, tz) -> Email:
+def parse_message(raw: bytes, flags: bytes, source: str, tz, me: str = "") -> Email:
     msg = email.message_from_bytes(raw)
+    to = {a.lower() for _, a in getaddresses([_decode(v) for v in msg.get_all("To", [])])}
     name, addr = parseaddr(_decode(msg.get("From")))
     try:
         received = parsedate_to_datetime(msg.get("Date")).astimezone(tz)
@@ -49,6 +50,7 @@ def parse_message(raw: bytes, flags: bytes, source: str, tz) -> Email:
         unread=b"\\Seen" not in flags,
         flagged=b"\\Flagged" in flags,
         source=source,
+        direct=(me.lower() in to) if me else None,
     )
 
 
@@ -78,7 +80,7 @@ class IMAPEmail(Connector):
                     _, parts = conn.fetch(msg_id, "(FLAGS BODY.PEEK[])")
                     meta, raw = parts[0]
                     flags = b" ".join(imaplib.ParseFlags(meta))
-                    out.append(parse_message(raw, flags, self.name, self.config.tz))
+                    out.append(parse_message(raw, flags, self.name, self.config.tz, me=user))
                 return out
         except imaplib.IMAP4.error as exc:
             raise ConnectorError(f"{self.name}: IMAP error: {exc}") from exc

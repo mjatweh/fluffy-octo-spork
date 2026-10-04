@@ -45,10 +45,12 @@ python -m life_dashboard build
 
 | Command | What it does |
 |---|---|
-| `build` | Collect, brief, write `output/dashboard.html`, `output/briefing.md` and `output/briefing-YYYY-MM-DD.md`, and print the briefing. Flags: `--dry-run`, `--sample`, `--date YYYY-MM-DD`, `--output DIR`, `-q`. |
+| `build` | Collect, brief, write `output/dashboard.html`, `output/briefing.md` and `output/briefing-YYYY-MM-DD.md`, and print the briefing. Flags: `--dry-run`, `--sample`, `--date YYYY-MM-DD`, `--output DIR`, `-q`, `--notify` (also send a compact briefing to Telegram, or to `NOTIFY_WEBHOOK_URL`). |
 | `serve` | Serve the output folder with `http.server`. Flags: `--port`, `--host`, `--build` (rebuild first), `--dry-run`. |
 | `schedule` | Print a snippet that runs `build` every morning: `--format cron\|launchd\|systemd\|github`, `--time 07:00`. |
 | `sources` | List the enabled connectors and every available connector type. |
+| `telegram` | Find your Telegram chat id (after you've messaged your bot) and send a test message. |
+| `auth` | One-time browser sign-in for Outlook / Microsoft 365 mail and calendar. |
 
 Global flags: `-c/--config PATH` (default `./config.toml`, then `$LIFE_DASHBOARD_CONFIG`, then the
 project folder) and `-v` for verbose logging. With no config file at all, the bundled sample connectors are used.
@@ -90,7 +92,7 @@ down) it shows red in **Connected tools**, Claude is told it's unavailable, and 
 | `type` | Kind | Options | Notes |
 |---|---|---|---|
 | `ics` | calendar | `source` (path, `https://` or `webcal://`) | Google, Outlook and iCloud all publish a private iCal URL, so no OAuth is needed. Handles TZID/UTC/floating times, all-day and multi-day events, RRULE (DAILY/WEEKLY/MONTHLY/YEARLY, INTERVAL, BYDAY, UNTIL, COUNT), EXDATE, RECURRENCE-ID overrides and cancelled events. |
-| *(any email connector)* | email | `group`, `work_reply_from`, `work_domains`, `work_senders` | See "Inbox groups and work routing" below. |
+| *(any email connector)* | email | `group`, `work_reply_from`, `work_domains`, `work_senders`, `fyi_domains`, `fyi_senders` | See "Inbox groups and work routing" below. |
 | `imap` | email | `host`, `username`, `password_env`, `mailbox`, `days`, `unread_only`, `limit`, `port` | Stdlib `imaplib`, read-only (`BODY.PEEK`, so nothing gets marked as read). For Gmail, use an App Password. |
 | `outlook` | email | `client_id` (or `client_id_env`), `tenant`, `folder`, `days`, `unread_only`, `limit`, `token_cache` | Outlook.com and Microsoft 365 through Microsoft Graph. Microsoft no longer accepts app passwords over IMAP, so this signs in once in the browser (see below). Read-only (`Mail.Read`). |
 | `outlook_calendar` | calendar | same sign-in options as `outlook`, plus `calendar_id` | Your Microsoft 365 / Outlook.com calendar through Graph, with Teams **Join** links. Shares the `outlook` sign-in when both have the same `account`. Read-only (`Calendars.Read`). |
@@ -119,6 +121,7 @@ Every email connector accepts these extra options:
 |---|---|
 | `group` | The section the inbox appears under on the dashboard and in the briefing, e.g. `"Work"`, `"Client"`, `"Personal"`. Defaults to the connector name. Sections follow the order of the connectors in your config, and `max_emails` applies to each section. |
 | `work_reply_from` | For a personal inbox that still receives work mail: the address work should come from. |
+| `fyi_domains`, `fyi_senders` | Senders you're only copied on for visibility. Their mail goes into a one-line **FYI** digest instead of the reply list, unless it's addressed to you directly (you're in To, not just Cc) and asks something. The To/Cc check works for IMAP inboxes; for other sources FYI mail never counts as needing a reply. |
 | `work_domains`, `work_senders` | Senders whose mail in that inbox counts as work. It gets a **work** pill and a "Reply from …" nudge, so people learn your work address. Claude also points out other mail that's clearly work. |
 
 ```toml
@@ -131,6 +134,7 @@ username = "you@gmail.com"
 password_env = "GMAIL_APP_PASSWORD"
 work_reply_from = "you@company.com"
 work_domains = ["company.com", "bigclient.com"]
+fyi_domains = ["subsidiary.com"]        # copied for visibility: FYI digest, not the reply list
 ```
 
 ### Outlook / Microsoft 365 email and calendar
@@ -212,6 +216,14 @@ to Claude through the official `anthropic` SDK:
   reason is shown in the page footer and on stderr.
 
 ## Run it automatically every morning
+
+The generated snippets run `build --notify`, so the briefing also lands on your phone once Telegram is set up:
+
+1. In Telegram, message [@BotFather](https://t.me/BotFather), send `/newbot` and follow the prompts.
+2. Put the token in `.env` as `TELEGRAM_BOT_TOKEN=...`, then send your new bot any message.
+3. Run `python -m life_dashboard telegram`: it prints the `TELEGRAM_CHAT_ID=...` line to add to `.env` and sends a test message.
+
+Without Telegram, `--notify` uses `NOTIFY_WEBHOOK_URL` (Slack / Discord), or just prints a warning.
 
 Generate a snippet with your real paths:
 

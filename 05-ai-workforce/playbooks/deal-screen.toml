@@ -1,0 +1,14 @@
+title = "Screen new deals"
+description = "Screen everything new in the deal inbox and update the pipeline."
+
+goal = """
+Screen the new deals in the deal inbox{extra}.
+- Deal Analyst: for each deal not yet in the pipeline, read it, compute the key numbers, check it against
+  the criteria, save a screening memo and add it to the pipeline with a recommendation.
+- Researcher: for any deal marked "pursue", look up the market, sponsor or company for red flags.
+Final report: table of deals screened (name, asset class, key metric, meets criteria, recommendation),
+then the questions to send each broker or seller. Nothing is sent: the owner decides.
+"""
+
+[vars]
+extra = ""

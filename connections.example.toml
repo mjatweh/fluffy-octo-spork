@@ -56,6 +56,8 @@ enabled = false
 #   work_domains = ["client.com"]       mail from these domains / addresses is flagged "work"
 #   work_senders = ["a@gmail.com"]      with a nudge to reply from work_reply_from, so people
 #                                       learn your work address. Claude also spots other work mail.
+#   fyi_domains = ["subsidiary.com"]    mail you're only copied on: summarized as FYI, kept out of
+#   fyi_senders = ["b@x.com"]           the reply list unless it's to you directly with a question.
 
 # Gmail: turn on 2-Step Verification, create an App Password, put it in .env as GMAIL_APP_PASSWORD
 [[connectors]]
@@ -67,6 +69,7 @@ username = "you@gmail.com"
 password_env = "GMAIL_APP_PASSWORD"
 # work_reply_from = "you@company.com"
 # work_domains = ["company.com", "client.com"]
+# fyi_domains = ["subsidiary.com"]
 days = 2
 unread_only = true
 limit = 25

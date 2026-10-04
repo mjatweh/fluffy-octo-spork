@@ -72,7 +72,7 @@ workforce/
   agent.py      Agent dataclass, the agent loop (tool use, max-turn guard, parallel tool calls),
                 Usage (tokens + est. cost per agent), Transcript (JSONL)
   registry.py   Tool registry: Python function + JSON schema (generated from type hints), validation
-  tools.py      Built-in tools (files, csv, web, knowledge, siblings, webhook)
+  tools.py      Built-in tools (files, csv, web, knowledge, siblings, Telegram / webhook)
   team.py       Team: Chief of Staff run, delegate_task, run_specialist, ask, standup
   knowledge.py  Second Brain adapter (sibling agent_api → local markdown fallback)
   safety.py     Approver (human-in-the-loop) + safe_path sandbox
@@ -114,6 +114,8 @@ Tool exceptions, invalid inputs and unknown tools go back to the model as `is_er
 | `sales_outreach` | Sales & Outreach | ICP, lead lists, outreach sequences, follow-ups | analyze_csv, files, search_knowledge, send_message† |
 | `ops_analyst` | Operations & Finance Analyst | KPIs, revenue, margins and pipeline from CSVs | analyze_csv, list/read/write files |
 | `knowledge_manager` | Knowledge Manager | Retrieves and files notes, decisions and SOPs in the Second Brain | search_knowledge, read_note, write_note†, upcoming_dates |
+| `deal_analyst` | Deal Analyst | Screens deals against your criteria, writes memos, keeps the pipeline tracker, drafts investor one-pagers. Never contacts brokers, sellers or investors. | deal_criteria, deal_inbox, read_deal_document, real_estate_metrics, investment_returns, check_deal_criteria, deal_pipeline, update_pipeline, save_deal_memo, search_knowledge, read_note, web_fetch |
+| `trading_analyst` | Trading Analyst | Portfolio review and trade ideas sized to your risk profile. **Analysis only: it has no tool that can trade.** | risk_profile, portfolio_snapshot, technical_signals, smart_money_signals, check_trade_idea, web_fetch, files |
 
 Put CSVs (e.g. `revenue.csv`, `leads.csv`) in `workspace/`, then try `run --playbook weekly-business-review`.
 
@@ -146,12 +148,55 @@ def stock_price(ctx: ToolContext, ticker: str) -> dict:
 
 Then list `"stock_price"` in an agent's `tools`. Set `side_effect=True` for anything that changes the outside world. That puts the tool behind the approval gate and makes dry-run skip it automatically. At startup the team checks that every tool named in the roster exists.
 
+## Deal analyst
+
+For a family office or investment team. Everything lives in the deals folder: `workspace/deals/` by
+default, or `$DEALS_DIR`. Both are kept out of git.
+
+| Path | What it is |
+|---|---|
+| `criteria.toml` | Criteria per asset class (`real_estate`, `operating_business`, `venture`, `funds`) as `min_<metric>` / `max_<metric>`, plus free-text notes. Start from `examples/deals/criteria.example.toml`. |
+| `inbox/` | Deals to screen: pasted listings (`.md` / `.txt`), forwarded emails (`.eml`), teasers and offering memos (`.pdf` needs `pip install pypdf`). |
+| `pipeline.csv` | The tracker the agent maintains: stage (`new` → `screening` → `diligence` → `loi` → `under_contract` → `closed`, or `passed`), key metric, recommendation, next step, owner. |
+| `memos/` | Screening memos and investor one-pagers. |
+
+The agent works out returns itself: cap rate, debt service, DSCR and cash-on-cash for property, and IRR
+and MOIC from cash flows. It states every assumption. Playbooks:
+
+- `run --playbook deal-screen` screens what's new in the inbox.
+- `run --playbook pipeline-review` is the weekly pipeline review, a good fit for a Sunday cron.
+- `run --playbook investor-one-pager --var audience="family offices in the Southeast"` drafts a one-pager.
+
+## Trading analyst
+
+The Trading Analyst reviews your portfolio and proposes ideas. Each idea comes with a thesis, the signals
+behind it, size as % of the portfolio, an entry zone, a stop and the main risk, and is checked against
+your position limits. It can't place, change or cancel orders: no such tool exists, and a test makes sure
+none is added. You trade in your own apps.
+
+Everything lives in the trading folder, `workspace/trading/` by default or `$TRADING_DIR`. Both are kept
+out of git.
+
+| File | What it is |
+|---|---|
+| `profile.toml` | Risk tolerance, horizon, max position %, max speculative %, default stop. Start from `examples/trading/profile.example.toml`. |
+| Revolut statement CSVs | Export your trading account statement from the Revolut app as Excel/CSV and drop it in the folder. Open positions are rebuilt from the buys, sells and splits. |
+| `holdings.csv` | Anything without an export, such as Autopilot: `account,ticker,shares,cost_basis`. |
+| `watchlist.txt` | Optional tickers to scan besides your holdings, one per line. |
+
+Data sources:
+- **Prices and technicals** (1d/5d/1m/3m change, SMA50/200, RSI14, trend, 52-week range): Stooq's free daily CSV, no key needed. Set `PRICE_CSV_URL` to use another source with the same CSV columns.
+- **Politician, insider and 13F signals**: the [Quiver Quant](https://www.quiverquant.com) API. Set `QUIVER_API_TOKEN`; without it, the analyst says those signals are unavailable.
+
+Run `python -m workforce run --playbook trading-review`, or `ask trading_analyst "..."`, for example in a
+weekly cron.
+
 ## Safety model
 
 - **Sandboxed workspace.** `read_file`, `write_file`, `list_files` and `analyze_csv` resolve paths inside `workspace/`. Absolute paths, `..` and symlink escapes are rejected.
 - **Human-in-the-loop for side effects.** These tools ask `Allow? [y/N]` on stdin before they run:
   - `write_note`: writes outside the workspace, into your vault
-  - `send_message`: webhook
+  - `send_message`: Telegram (`TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID`) or a webhook (`WORKFORCE_WEBHOOK_URL` / `NOTIFY_WEBHOOK_URL`)
   - `run_sibling`: runs other programs
 
   Prompts are serialized across parallel workers. `--yes` auto-approves. With no TTY and no `--yes` (e.g. cron), the default is **deny**. When the human declines, the agent is told and continues without that tool.

@@ -27,12 +27,34 @@ def render_markdown(data: DayData, b: Briefing) -> str:
     lines += section("Top priorities", [f"{i}" for i in b.top_priorities])
     lines += section("Schedule", b.schedule_highlights)
     lines += section("Emails to reply to", b.emails_to_reply)
+    if b.fyi:
+        lines += section("FYI", b.fyi)
     lines += section("Risks & conflicts", b.risks)
     if b.focus_tip:
         lines += ["## Focus tip", b.focus_tip, ""]
     lines += ["## Tasks", *(f"- [ ] {t.title}" + (f" 📅 {t.due}" if t.due else "") for t in data.tasks), ""]
     lines.append(f"_Generated {data.generated_at:%Y-%m-%d %H:%M} by life-dashboard ({b.generated_by})._")
     return "\n".join(lines) + "\n"
+
+
+def render_phone(data: DayData, b: Briefing) -> str:
+    """Compact plain-text briefing for a phone notification (Telegram / Slack)."""
+    lines = [f"{data.day:%A, %B} {data.day.day}: {b.headline}", "", b.summary]
+
+    def block(title: str, items: list[str], limit: int = 6) -> None:
+        if items:
+            lines.extend(["", title, *(f"• {i}" for i in items[:limit])])
+            if len(items) > limit:
+                lines.append(f"  …and {len(items) - limit} more on the dashboard")
+
+    block("Top priorities", b.top_priorities)
+    block("Schedule", b.schedule_highlights, 8)
+    block("Reply to", b.emails_to_reply)
+    block("FYI", b.fyi, 3)
+    block("Watch out", b.risks)
+    if b.focus_tip:
+        lines.extend(["", f"Focus: {b.focus_tip}"])
+    return "\n".join(lines)
 
 
 def write_vault_note(vault: Path, data: DayData, markdown: str) -> Path:

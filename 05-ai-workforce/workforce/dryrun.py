@@ -18,6 +18,8 @@ KEYWORDS = {
     "sales_outreach": "outreach sales lead leads prospect icp campaign outbound follow-up pipeline",
     "ops_analyst": "revenue finance metrics kpi review csv cost margin weekly business numbers",
     "knowledge_manager": "notes knowledge vault document sop decisions brain",
+    "deal_analyst": "deal deals pipeline investment investments acquisition property real-estate memo screen screening investor capital raise",
+    "trading_analyst": "trading trade portfolio stocks stock invest investing holdings market movers insider congress",
 }
 
 DELIVERABLES = {
@@ -33,6 +35,12 @@ DELIVERABLES = {
                                      "Baseline from available data; flag missing CSVs", "Recommendation: cap tool spend, reinvest in outreach"],
     "Knowledge Manager": ["Relevant prior notes surfaced for the team", "Decision log entry drafted for this goal",
                           "SOP stub created so the process is repeatable"],
+    "Deal Analyst": ["Screened new deals against the criteria: pass / pursue / need more info",
+                     "Key numbers per deal (cap rate, DSCR, IRR, MOIC) with assumptions shown",
+                     "Pipeline tracker updated with stage, next step and owner"],
+    "Trading Analyst": ["Portfolio: concentration and P/L reviewed against your position limits",
+                        "Ideas: each with thesis, signals, size %, entry zone and stop (checked by check_trade_idea)",
+                        "Analysis only, not licensed financial advice: you place any trades yourself"],
 }
 
 
@@ -135,6 +143,8 @@ class DryRunLLM:
                                                     "content": f"# Outreach draft\n\nGoal: {topic}\n\n1. Intro email\n2. Day-3 bump\n3. Day-7 value follow-up\n"}),
                 "Operations & Finance Analyst": ("list_files", {}),
                 "Knowledge Manager": ("search_knowledge", {"query": topic}),
+                "Trading Analyst": ("risk_profile", {}),
+                "Deal Analyst": ("deal_inbox", {}),
             }.get(name)
             if choice and choice[0] in tools:
                 return fake_response(text_block(f"Checking {choice[0]} first."), tool_use_block(*choice))
