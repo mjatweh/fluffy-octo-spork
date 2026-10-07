@@ -40,6 +40,10 @@ def render_markdown(data: DayData, b: Briefing) -> str:
 def render_phone(data: DayData, b: Briefing) -> str:
     """Compact plain-text briefing for a phone notification (Telegram / Slack)."""
     lines = [f"{data.day:%A, %B} {data.day.day}: {b.headline}", "", b.summary]
+    failed = [s for s in data.statuses if not s.ok]
+    if failed:
+        lines[:0] = ["⚠ Needs attention: " + "; ".join(f"{s.name}: {s.message}" for s in failed)
+                     + ". Run `python3 setup_wizard.py --check` on your Mac.", ""]
 
     def block(title: str, items: list[str], limit: int = 6) -> None:
         if items:

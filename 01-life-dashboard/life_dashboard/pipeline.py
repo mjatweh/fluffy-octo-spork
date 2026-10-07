@@ -47,6 +47,16 @@ def collect(config: Config, day: date) -> DayData:
     return data
 
 
+def publish(folder: Path, html: Path, markdown: Path) -> None:
+    """Copy the dashboard somewhere your other devices sync (e.g. iCloud Drive). Never fails the build."""
+    try:
+        folder.mkdir(parents=True, exist_ok=True)
+        (folder / "dashboard.html").write_bytes(html.read_bytes())
+        (folder / "briefing.md").write_bytes(markdown.read_bytes())
+    except OSError as exc:
+        log.warning("could not publish to %s: %s", folder, exc)
+
+
 @dataclass
 class BuildResult:
     html: Path
@@ -72,4 +82,6 @@ def build(config: Config, day: date | None = None, offline: bool = False, client
     (out / "briefing.md").write_text(markdown, encoding="utf-8")
 
     vault_note = write_vault_note(config.vault_path, data, markdown) if config.vault_path else None
+    if config.publish_dir:
+        publish(config.publish_dir, html_path, md_path)
     return BuildResult(html_path, md_path, vault_note, note, data, briefing)

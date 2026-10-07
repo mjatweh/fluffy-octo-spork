@@ -26,6 +26,7 @@ class Config:
     timezone: str = ""
     output_dir: Path = PROJECT_DIR / "output"
     vault_path: Path | None = None
+    publish_dir: Path | None = None  # extra copy of the dashboard, e.g. an iCloud Drive folder for your phone
     model: str = DEFAULT_MODEL
     max_emails: int = 8
     connectors: list[dict[str, Any]] = field(default_factory=lambda: list(SAMPLE_CONNECTORS))
@@ -70,6 +71,8 @@ def load_config(path: str | None = None) -> Config:
     cfg = Config()
     if os.environ.get("VAULT_PATH"):
         cfg.vault_path = Path(os.environ["VAULT_PATH"]).expanduser()
+    if os.environ.get("DASHBOARD_PUBLISH_DIR"):
+        cfg.publish_dir = Path(os.environ["DASHBOARD_PUBLISH_DIR"]).expanduser()
     if found is None:
         cfg.model = os.environ.get("CLAUDE_MODEL") or DEFAULT_MODEL
         return cfg
@@ -82,6 +85,8 @@ def load_config(path: str | None = None) -> Config:
     cfg.output_dir = cfg.resolve(raw.get("output_dir", "output"))
     if raw.get("vault_path"):
         cfg.vault_path = cfg.resolve(raw["vault_path"])
+    if raw.get("publish_dir"):
+        cfg.publish_dir = cfg.resolve(raw["publish_dir"])
     llm = raw.get("llm", {})
     cfg.model = os.environ.get("CLAUDE_MODEL") or llm.get("model") or DEFAULT_MODEL
     cfg.max_emails = int(raw.get("max_emails", cfg.max_emails))
