@@ -26,6 +26,7 @@ from pathlib import Path
 from typing import Callable
 
 from ..models import Email, Event
+from .. import tls
 from .base import Connector, ConnectorError, register
 
 LOGIN = "https://login.microsoftonline.com/{tenant}/oauth2/v2.0/{endpoint}"
@@ -54,7 +55,7 @@ def _request(url: str, data: dict | None = None, token: str | None = None, timeo
         headers["Prefer"] = 'outlook.body-content-type="text", outlook.timezone="UTC"'
     req = urllib.request.Request(url, data=body, headers=headers)
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
+        with urllib.request.urlopen(req, timeout=timeout, context=tls.context()) as resp:
             return json.load(resp)
     except urllib.error.HTTPError as exc:
         try:

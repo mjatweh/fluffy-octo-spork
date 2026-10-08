@@ -8,6 +8,7 @@ import urllib.request
 from datetime import date
 
 from ..models import Task
+from .. import tls
 from .base import Connector, register
 
 # Todoist priorities: 4 = urgent (red) ... 1 = normal. Ours: 1 = urgent ... 4 = low.
@@ -44,5 +45,5 @@ class Todoist(Connector):
         base = self.option("api_url", "https://api.todoist.com/api/v1/tasks/filter")
         url = f"{base}?{urllib.parse.urlencode({'query': self.option('filter', 'today | overdue')})}"
         req = urllib.request.Request(url, headers={"Authorization": f"Bearer {token}"})
-        with urllib.request.urlopen(req, timeout=20) as resp:
+        with urllib.request.urlopen(req, timeout=20, context=tls.context()) as resp:
             return parse_tasks(json.load(resp), self.name)

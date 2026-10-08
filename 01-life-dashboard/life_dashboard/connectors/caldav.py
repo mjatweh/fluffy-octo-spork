@@ -17,6 +17,7 @@ import xml.etree.ElementTree as ET
 from datetime import date, datetime, time, timedelta, timezone
 
 from ..models import Event
+from .. import tls
 from .base import Connector, ConnectorError, register
 from .ics import events_for_day
 
@@ -83,7 +84,7 @@ class CalDAVCalendar(Connector):
                 "Authorization": f"Basic {creds.decode()}", "Depth": depth,
                 "Content-Type": "application/xml; charset=utf-8", "User-Agent": "life-dashboard/1.0"})
             try:
-                with urllib.request.urlopen(req, timeout=20) as resp:
+                with urllib.request.urlopen(req, timeout=20, context=tls.context()) as resp:
                     return resp.geturl(), resp.read().decode("utf-8", errors="replace")
             except urllib.error.HTTPError as exc:
                 if exc.code in (301, 302, 307, 308) and exc.headers.get("Location"):
