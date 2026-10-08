@@ -70,7 +70,7 @@ class IMAPEmail(Connector):
         criteria = f"(UNSEEN SINCE {since})" if self.option("unread_only", True) else f"(SINCE {since})"
         limit = int(self.option("limit", 25))
         try:
-            with imaplib.IMAP4_SSL(host, int(self.option("port", 993))) as conn:
+            with imaplib.IMAP4_SSL(host, int(self.option("port", 993)), timeout=int(self.option("timeout", 30))) as conn:
                 conn.login(user, password)
                 conn.select(self.option("mailbox", "INBOX"), readonly=True)
                 _, data = conn.search(None, criteria)
@@ -84,3 +84,5 @@ class IMAPEmail(Connector):
                 return out
         except imaplib.IMAP4.error as exc:
             raise ConnectorError(f"{self.name}: IMAP error: {exc}") from exc
+        except OSError as exc:  # DNS failure, refused, timed out
+            raise ConnectorError(f"{self.name}: can't reach {host}: {exc}") from exc

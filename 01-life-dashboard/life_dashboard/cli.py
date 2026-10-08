@@ -39,7 +39,18 @@ def cmd_build(args) -> int:
 
     cfg = _config(args)
     day = date.fromisoformat(args.date) if args.date else None
-    result = build(cfg, day=day, offline=args.dry_run)
+    try:
+        result = build(cfg, day=day, offline=args.dry_run)
+    except Exception as exc:  # tell the phone, not just a log file nobody reads
+        if getattr(args, "notify", False):
+            from .notify import NotifyError, send
+
+            try:
+                send(f"⚠ Life Dashboard failed to build: {type(exc).__name__}: {exc}\n"
+                     "Run `python3 setup_wizard.py --check` on your Mac.")
+            except NotifyError:
+                pass
+        raise
     if not args.quiet:
         print(result.markdown.read_text(encoding="utf-8"))
     print(f"Dashboard: {result.html}", file=sys.stderr)

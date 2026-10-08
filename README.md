@@ -14,6 +14,34 @@ mode (bundled sample data, no API key needed). With `ANTHROPIC_API_KEY` set they
 
 Run each command from inside its project folder.
 
+## Go live (Mac, about an hour, mostly signing in to accounts)
+
+```bash
+git clone https://github.com/mjatweh/fluffy-octo-spork.git ~/fluffy-octo-spork
+cd ~/fluffy-octo-spork
+cp setup.example.toml setup.local.toml   # optional: list your accounts here (gitignored)
+python3 setup_wizard.py
+```
+
+The wizard walks through each step, opens the right web page and explains what to click:
+Claude key → Second Brain vault in iCloud (so the Obsidian app on your iPhone sees it) → each
+inbox and calendar, tested right after you enter it → Telegram → schedules → first dashboard.
+Passwords are typed hidden and saved only in `.env` (chmod 600, gitignored).
+
+What keeps it running:
+
+- **launchd jobs** for the 07:00 dashboard, 08:00 / 21:00 check-ins and the Sunday review. A job missed
+  while the Mac slept runs when it wakes, and an optional daily wake-up at 06:55 means the morning run doesn't miss.
+- **Alerts on Telegram** when a source fails or the build breaks, with the command that fixes it.
+- `python3 setup_wizard.py --check` tests every connection, the schedules, the vault and Telegram, and
+  prints a fix for anything wrong. `--update` pulls the latest code and re-checks. `--only <step>`
+  re-runs one step (`claude`, `vault`, `accounts`, `telegram`, `schedule`, `build`).
+
+Where to see it from anywhere: the briefing and alerts on **Telegram**; the dashboard in the iPhone
+**Files** app → iCloud Drive → Life Dashboard; the Second Brain and each day's briefing (`Daily/`) in
+the **Obsidian** app. Logs are in `~/Library/Logs/life-assistant/`. If a scheduled run can't write to
+iCloud Drive, give `.venv/bin/python` Full Disk Access in System Settings → Privacy & Security.
+
 ## Setup
 
 ```bash

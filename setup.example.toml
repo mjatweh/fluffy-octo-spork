@@ -1,0 +1,44 @@
+# Copy to setup.local.toml (gitignored) and fill in, then run: python3 setup_wizard.py
+# The wizard asks for anything missing and for every password; passwords never go in this file.
+
+timezone = "America/New_York"
+vault_name = "SecondBrain"        # Obsidian vault name (created in iCloud so your iPhone sees it)
+schedule_time = "07:00"           # morning dashboard + briefing
+
+[[email]]
+name = "Work mail"
+group = "Work"                    # section on the dashboard
+provider = "gmail"                # gmail | outlook | icloud | imap
+address = "you@company.com"
+fyi_domains = ["subsidiary.com"]  # copied-for-visibility mail: FYI digest, not the reply list
+
+[[email]]
+name = "Client mail"
+group = "Client"
+provider = "outlook"              # Outlook / Microsoft 365: browser sign-in, no password
+account = "client"                # same account name as its calendar below = one sign-in
+address = "you@client.com"
+
+[[email]]
+name = "Personal Gmail"
+group = "Personal"
+provider = "gmail"
+address = "you@gmail.com"
+work_reply_from = "you@company.com"   # nudge to answer work mail from this address
+work_domains = ["company.com"]
+work_senders = ["partner@gmail.com"]
+
+[[calendar]]
+name = "Work calendar"
+provider = "google"               # secret iCal link (the wizard shows where to find it)
+address = "you@company.com"
+
+[[calendar]]
+name = "Client calendar"
+provider = "outlook"
+account = "client"
+
+[[calendar]]
+name = "iCloud"
+provider = "icloud"               # includes calendars other people share with you
+calendars = ["Family"]            # names to include; empty = all

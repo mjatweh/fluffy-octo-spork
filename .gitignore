@@ -3,3 +3,6 @@
 connections.toml
 __pycache__/
 .pytest_cache/
+connections.toml.bak
+setup.local.toml
+.venv/
