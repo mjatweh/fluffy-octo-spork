@@ -13,6 +13,8 @@ from abc import ABC, abstractmethod
 from datetime import date
 from typing import TYPE_CHECKING, Any, ClassVar
 
+from .. import tls
+
 if TYPE_CHECKING:
     from ..config import Config
     from ..models import Email, Event, Task
@@ -58,7 +60,7 @@ class Connector(ABC):
             source = "https://" + source[len("webcal://"):]
         if source.startswith(("http://", "https://")):
             req = urllib.request.Request(source, headers={"User-Agent": "life-dashboard/1.0"})
-            with urllib.request.urlopen(req, timeout=timeout) as resp:
+            with urllib.request.urlopen(req, timeout=timeout, context=tls.context()) as resp:
                 return resp.read().decode("utf-8", errors="replace")
         path = self.config.resolve(source)
         if not path.is_file():

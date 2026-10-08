@@ -12,6 +12,8 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
+from . import tls
+
 TELEGRAM_API = "https://api.telegram.org/bot{token}/{method}"
 TELEGRAM_LIMIT = 4000  # Telegram caps a message at 4096 characters
 
@@ -40,7 +42,7 @@ def _post(url: str, payload: dict, timeout: float = 15) -> dict:
     req = urllib.request.Request(url, data=json.dumps(payload).encode(), method="POST",
                                  headers={"Content-Type": "application/json", "User-Agent": "life-dashboard/1.0"})
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
+        with urllib.request.urlopen(req, timeout=timeout, context=tls.context()) as resp:
             body = resp.read()
     except urllib.error.HTTPError as exc:
         detail = exc.read().decode("utf-8", "replace")[:200]

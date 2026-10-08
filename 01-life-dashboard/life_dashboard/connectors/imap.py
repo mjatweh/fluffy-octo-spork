@@ -11,6 +11,7 @@ from email.header import decode_header, make_header
 from email.utils import getaddresses, parseaddr, parsedate_to_datetime
 
 from ..models import Email
+from .. import tls
 from .base import Connector, ConnectorError, register
 
 
@@ -70,7 +71,8 @@ class IMAPEmail(Connector):
         criteria = f"(UNSEEN SINCE {since})" if self.option("unread_only", True) else f"(SINCE {since})"
         limit = int(self.option("limit", 25))
         try:
-            with imaplib.IMAP4_SSL(host, int(self.option("port", 993)), timeout=int(self.option("timeout", 30))) as conn:
+            with imaplib.IMAP4_SSL(host, int(self.option("port", 993)), timeout=int(self.option("timeout", 30)),
+                                   ssl_context=tls.context()) as conn:
                 conn.login(user, password)
                 conn.select(self.option("mailbox", "INBOX"), readonly=True)
                 _, data = conn.search(None, criteria)

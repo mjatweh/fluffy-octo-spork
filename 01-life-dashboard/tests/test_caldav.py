@@ -124,7 +124,7 @@ def test_send_follows_redirects_and_sends_basic_auth(conn, monkeypatch):
         def __exit__(self, *a):
             return False
 
-    def urlopen(req, timeout=20):
+    def urlopen(req, timeout=20, context=None):
         seen.append(req)
         if len(seen) == 1:
             headers = Message()
@@ -140,7 +140,7 @@ def test_send_follows_redirects_and_sends_basic_auth(conn, monkeypatch):
 
 
 def test_wrong_password_message(conn, monkeypatch):
-    def urlopen(req, timeout=20):
+    def urlopen(req, timeout=20, context=None):
         raise urllib.error.HTTPError(req.full_url, 401, "Unauthorized", Message(), None)
 
     monkeypatch.setattr(caldav.urllib.request, "urlopen", urlopen)

@@ -48,6 +48,7 @@ import platform  # noqa: E402
 import plistlib  # noqa: E402
 import subprocess  # noqa: E402
 import time  # noqa: E402
+import urllib.parse  # noqa: E402
 import tomllib  # noqa: E402
 import venv  # noqa: E402
 import webbrowser  # noqa: E402
@@ -57,7 +58,7 @@ from pathlib import Path  # noqa: E402
 ROOT = Path(__file__).resolve().parent
 VENV = ROOT / ".venv"
 VENV_PY = VENV / "bin" / "python"
-DEPS = ["anthropic", "jinja2", "pypdf"]
+DEPS = ["anthropic", "jinja2", "pypdf", "certifi"]
 ENV_FILE = ROOT / ".env"
 CONNECTIONS = ROOT / "connections.toml"
 ANSWERS = ROOT / "setup.local.toml"
@@ -400,7 +401,7 @@ class Wizard:
                 entry["calendars"] = [c.strip() for c in ui.ask("Calendar names, comma-separated (empty = all)").split(",") if c.strip()]
             a.setdefault("calendar", []).append(entry)
 
-    def retry_test(self, options: dict, label: str, fix) -> bool:
+    def retry_test(self, options: dict, label: str, fix, again=None) -> bool:
         while True:
             ok, detail = test_connector(options, self.answers.get("timezone", ""))
             self.ui.say(f"  {'✔' if ok else '✘'} {label}: {detail}")
@@ -411,6 +412,8 @@ class Wizard:
                 return False
             if choice == 0:
                 fix()
+            elif again:
+                again()
 
     def setup_email(self, e: dict) -> None:
         ui, p = self.ui, e.get("provider", "gmail")
@@ -423,17 +426,20 @@ class Wizard:
             e.setdefault("secret_env", env_name(e["name"]) + "_PASSWORD")
             help_key = p if p in HELP else "imap"
             if p == "gmail":
-                open_url("https://myaccount.google.com/apppasswords")
+                open_url("https://myaccount.google.com/apppasswords?authuser=" + urllib.parse.quote(e["address"]))
             self.get_secret(e["secret_env"], help_key, address=e["address"])
         (options,) = connectors_from({"email": [e]}, None)
+        again = None
         if p == "outlook":
             def fix():
                 self.microsoft_signin(e.get("account", "outlook"), e.get("address", ""), force=True)
+            def again():  # repeat the sign-in when it didn't finish; keeps the saved client ID
+                self.microsoft_signin(e.get("account", "outlook"), e.get("address", ""))
         else:
             def fix():
                 self.env.pop(e["secret_env"], None)
                 self.get_secret(e["secret_env"], p if p in HELP else "imap", address=e["address"])
-        self.retry_test(options, e["name"], fix)
+        self.retry_test(options, e["name"], fix, again)
 
     def setup_calendar(self, c: dict) -> None:
         ui, p = self.ui, c.get("provider")
@@ -462,9 +468,11 @@ class Wizard:
             self.microsoft_signin(c.get("account", "outlook"), c.get("address", "your Microsoft account"))
             def fix():
                 self.microsoft_signin(c.get("account", "outlook"), c.get("address", ""), force=True)
+            def again():
+                self.microsoft_signin(c.get("account", "outlook"), c.get("address", ""))
         options = connectors_from({"calendar": [c]}, None)
         if options:
-            self.retry_test(options[0], c["name"], fix)
+            self.retry_test(options[0], c["name"], fix, again if p not in ("google", "icloud") else None)
 
     def microsoft_signin(self, account: str, address: str, force: bool = False) -> None:
         ui = self.ui
@@ -486,6 +494,11 @@ class Wizard:
             ui.say("  ✔ Signed in to Microsoft.")
         except Exception as exc:
             ui.say(f"  ✘ Microsoft sign-in failed: {exc}")
+            if "CERTIFICATE_VERIFY_FAILED" in str(exc):
+                ui.say("    Python can't check Microsoft's certificate. Quit with Ctrl+C, run:\n"
+                       "      python3 setup_wizard.py --update\n"
+                       "    then choose this step again. Still failing? Double-click\n"
+                       "      /Applications/Python 3.13/Install Certificates.command")
 
     # 5
     def step_telegram(self) -> None:
