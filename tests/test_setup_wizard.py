@@ -120,3 +120,13 @@ def test_accounts_step_end_to_end(tmp_path, monkeypatch):
     assert [c["type"] for c in conns] == ["ics", "imap"]
     assert any("✔ Work calendar" in line for line in ui.out)
     assert tomllib.loads((tmp_path / "setup.local.toml").read_text())["email"][0]["secret_env"] == "PERSONAL_GMAIL_PASSWORD"
+
+
+def test_find_newer_python_prefers_newest(monkeypatch, tmp_path):
+    fake = {"python3.12": "/opt/homebrew/bin/python3.12", "python3.11": "/usr/local/bin/python3.11"}
+    monkeypatch.setattr(sw.shutil, "which", lambda name: fake.get(name))
+    monkeypatch.setattr(sw.os, "access", lambda path, mode: True)
+    monkeypatch.setattr(sw, "PY_DIRS", [])
+    assert sw.find_newer_python() == "/opt/homebrew/bin/python3.12"
+    monkeypatch.setattr(sw.shutil, "which", lambda name: None)
+    assert sw.find_newer_python() is None
