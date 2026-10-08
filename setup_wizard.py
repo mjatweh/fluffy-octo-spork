@@ -13,19 +13,46 @@ connections.toml are all gitignored: nothing personal is ever committed.
 """
 from __future__ import annotations
 
-import argparse
-import getpass
 import os
-import platform
-import plistlib
-import subprocess
+import shutil
 import sys
-import time
-import tomllib
-import venv
-import webbrowser
-from datetime import date
-from pathlib import Path
+
+PY_CANDIDATES = ["python3.13", "python3.12", "python3.11"]
+PY_DIRS = ["/opt/homebrew/bin", "/usr/local/bin", "/Library/Frameworks/Python.framework/Versions/Current/bin"]
+
+
+def find_newer_python() -> str | None:
+    """A Python 3.11+ on this machine, even when the `python3` you typed is older (macOS ships 3.9)."""
+    for name in PY_CANDIDATES:
+        for d in [None, *PY_DIRS]:
+            path = shutil.which(name) if d is None else os.path.join(d, name)
+            if path and os.access(path, os.X_OK):
+                return path
+    return None
+
+
+if sys.version_info < (3, 11):  # must run before any 3.11-only import below
+    _newer = find_newer_python()
+    if _newer:
+        os.execv(_newer, [_newer, os.path.abspath(__file__), *sys.argv[1:]])
+    print(f"This needs Python 3.11 or newer; this Mac's python3 is {sys.version.split()[0]}.\n"
+          "Install the latest Python (free, about 2 minutes):\n"
+          "  1. Open https://www.python.org/downloads/macos/ and click the top 'Download macOS installer' link.\n"
+          "  2. Open the downloaded .pkg and click Continue / Agree / Install until it says it's done.\n"
+          "  3. Close Terminal, open it again, and run: cd ~/fluffy-octo-spork && python3 setup_wizard.py")
+    sys.exit(1)
+
+import argparse  # noqa: E402
+import getpass  # noqa: E402
+import platform  # noqa: E402
+import plistlib  # noqa: E402
+import subprocess  # noqa: E402
+import time  # noqa: E402
+import tomllib  # noqa: E402
+import venv  # noqa: E402
+import webbrowser  # noqa: E402
+from datetime import date  # noqa: E402
+from pathlib import Path  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent
 VENV = ROOT / ".venv"
@@ -629,6 +656,9 @@ def ensure_venv() -> None:
     """Re-run this script inside .venv so every step uses the same, known Python."""
     if Path(sys.prefix).resolve() == VENV.resolve():
         return
+    if VENV_PY.exists() and subprocess.run([str(VENV_PY), "-c", "import sys; sys.exit(sys.version_info < (3, 11))"]).returncode:
+        print("Rebuilding .venv with a newer Python (the old one was made with Python < 3.11) ...")
+        shutil.rmtree(VENV)
     if not VENV_PY.exists():
         print("Creating a private Python environment in .venv (first run only) ...")
         venv.create(VENV, with_pip=True)
