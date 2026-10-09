@@ -33,6 +33,8 @@ What keeps it running:
 - **launchd jobs** for the 07:00 dashboard, 08:00 / 21:00 check-ins and the Sunday review. A job missed
   while the Mac slept runs when it wakes, and an optional daily wake-up at 06:55 means the morning run doesn't miss.
 - **Alerts on Telegram** when a source fails or the build breaks, with the command that fixes it.
+- **A Telegram bot you can ask questions** ("what's on tomorrow?"): it reads your calendars, inboxes, tasks and
+  Second Brain, never sends or changes anything, and answers only you. It answers while the Mac is awake.
 - `python3 setup_wizard.py --check` tests every connection, the schedules, the vault and Telegram, and
   prints a fix for anything wrong. `--update` pulls the latest code and re-checks. `--only <step>`
   re-runs one step (`claude`, `vault`, `accounts`, `telegram`, `schedule`, `build`).

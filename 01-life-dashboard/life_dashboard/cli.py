@@ -1,4 +1,4 @@
-"""Command line: ``python -m life_dashboard {build,serve,schedule,sources}``."""
+"""Command line: ``python -m life_dashboard {build,serve,schedule,sources,telegram,bot,auth}``."""
 from __future__ import annotations
 
 import argparse
@@ -163,6 +163,24 @@ def cmd_auth(args) -> int:
     return 0
 
 
+def cmd_bot(args) -> int:
+    """Answer questions sent to your Telegram bot (runs until stopped)."""
+    from .assistant import Assistant
+    from .bot import run
+
+    token, chat_id = os.environ.get("TELEGRAM_BOT_TOKEN", ""), os.environ.get("TELEGRAM_CHAT_ID", "")
+    if not (token and chat_id):
+        print("Set TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID in .env first (python -m life_dashboard telegram).")
+        return 0  # nothing to do; exit cleanly so launchd doesn't keep restarting it
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        print("Set ANTHROPIC_API_KEY in .env first: the bot needs Claude to answer questions.")
+        return 0
+    logging.getLogger().setLevel(logging.INFO)
+    cfg = load_config(args.config)
+    run(Assistant(cfg), token, chat_id, Path.home() / ".config" / "life-dashboard" / "telegram-offset", once=args.once)
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     load_dotenv(Path.cwd() / ".env")
     load_dotenv(PROJECT_DIR / ".env")
@@ -198,6 +216,10 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("sources", help="list configured and available connectors").set_defaults(func=cmd_sources)
 
     sub.add_parser("telegram", help="find your Telegram chat id and send a test message").set_defaults(func=cmd_telegram)
+
+    bt = sub.add_parser("bot", help="answer questions sent to your Telegram bot (runs until stopped)")
+    bt.add_argument("--once", action="store_true", help="answer waiting messages, then exit")
+    bt.set_defaults(func=cmd_bot)
 
     a = sub.add_parser("auth", help="one-time browser sign-in for Outlook / Microsoft 365 mail and calendar connectors")
     a.add_argument("name", nargs="?", help="connector or account name (default: every enabled Outlook connector)")

@@ -62,12 +62,16 @@ def test_calendar_without_link_or_apple_id_is_left_out():
 def test_launchd_plist_and_jobs(tmp_path, monkeypatch):
     monkeypatch.setattr(sw, "LOG_DIR", tmp_path / "logs")
     jobs = sw.schedule_jobs(Path("/venv/python"), "06:30")
-    assert [j["name"] for j in jobs] == ["dashboard", "checkin-morning", "checkin-evening", "weekly-review"]
+    assert [j["name"] for j in jobs] == ["dashboard", "checkin-morning", "checkin-evening", "weekly-review",
+                                         "telegram-bot"]
     assert jobs[0]["hour"] == 6 and jobs[0]["minute"] == 30 and "--notify" in jobs[0]["args"]
     plist = plistlib.loads(sw.launchd_plist("weekly-review", jobs[3]["args"], jobs[3]["workdir"], 18, 0, 0))
     assert plist["Label"] == "com.life-assistant.weekly-review"
     assert plist["StartCalendarInterval"] == {"Hour": 18, "Minute": 0, "Weekday": 0}
     assert plist["ProgramArguments"][0] == "/venv/python"
+    bot = plistlib.loads(sw.launchd_plist("telegram-bot", jobs[4]["args"], jobs[4]["workdir"], keep_alive=True))
+    assert bot["RunAtLoad"] and bot["KeepAlive"] == {"SuccessfulExit": False}
+    assert "StartCalendarInterval" not in bot and bot["ProgramArguments"][-1] == "bot"
 
 
 def test_test_connector_reports_failures_kindly(tmp_path, monkeypatch):
