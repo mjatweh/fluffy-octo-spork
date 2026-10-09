@@ -51,6 +51,7 @@ python -m life_dashboard build
 | `sources` | List the enabled connectors and every available connector type. |
 | `telegram` | Find your Telegram chat id (after you've messaged your bot) and send a test message. |
 | `bot` | Answer questions you send your Telegram bot ("what's on tomorrow?", "any Oculi emails to answer?") using Claude with read-only access to your calendars, inboxes, tasks and the Second Brain vault. Replies only to `TELEGRAM_CHAT_ID`. Runs until stopped; `--once` answers waiting messages and exits. The setup wizard installs it as a LaunchAgent that restarts it if it crashes. |
+| `mirror` | Copy an iCloud calendar (default: the first `icloud`/`caldav` connector) into a separate Google calendar, "<name> (copy)", for the next 60 days, so the Claude app, which reads Google Calendar, can see it. `mirror auth` signs in to Google once (permission: only calendars this app creates). One-way and idempotent; the setup wizard's `google` step sets it up and runs it every 30 minutes. |
 | `auth` | One-time browser sign-in for Outlook / Microsoft 365 mail and calendar. |
 
 Global flags: `-c/--config PATH` (default `./config.toml`, then `$LIFE_DASHBOARD_CONFIG`, then the

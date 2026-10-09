@@ -35,9 +35,11 @@ What keeps it running:
 - **Alerts on Telegram** when a source fails or the build breaks, with the command that fixes it.
 - **A Telegram bot you can ask questions** ("what's on tomorrow?"): it reads your calendars, inboxes, tasks and
   Second Brain, never sends or changes anything, and answers only you. It answers while the Mac is awake.
+- **iCloud calendar copied to Google Calendar** every 30 minutes (`--only google`), so the Claude app on your
+  phone can see it too.
 - `python3 setup_wizard.py --check` tests every connection, the schedules, the vault and Telegram, and
   prints a fix for anything wrong. `--update` pulls the latest code and re-checks. `--only <step>`
-  re-runs one step (`claude`, `vault`, `accounts`, `telegram`, `schedule`, `build`).
+  re-runs one step (`claude`, `vault`, `accounts`, `telegram`, `google`, `schedule`, `build`).
 
 Where to see it from anywhere: the briefing and alerts on **Telegram**; the dashboard in the iPhone
 **Files** app → iCloud Drive → Life Dashboard; the Second Brain and each day's briefing (`Daily/`) in
