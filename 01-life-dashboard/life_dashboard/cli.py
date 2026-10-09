@@ -1,4 +1,4 @@
-"""Command line: ``python -m life_dashboard {build,serve,schedule,sources,telegram,bot,mirror,auth}``."""
+"""Command line: ``python -m life_dashboard {build,serve,schedule,sources,telegram,bot,mirror,attachments,auth}``."""
 from __future__ import annotations
 
 import argparse
@@ -218,6 +218,15 @@ def cmd_mirror(args) -> int:
         return 1
 
 
+def cmd_attachments(args) -> int:
+    """Save important email attachments to the Second Brain inbox and file them."""
+    from .attachments import RULES_FILE, run
+
+    cfg = load_config(args.config)
+    return run(cfg, days=args.days, dry_run=args.dry_run, do_ingest=not args.no_ingest,
+               rules_file=Path(args.rules) if args.rules else RULES_FILE)
+
+
 def main(argv: list[str] | None = None) -> int:
     load_dotenv(Path.cwd() / ".env")
     load_dotenv(PROJECT_DIR / ".env")
@@ -265,6 +274,13 @@ def main(argv: list[str] | None = None) -> int:
     m.add_argument("--calendar", help='Google calendar name (default: "<source> (copy)")')
     m.add_argument("--days", type=int, default=60, help="how many days ahead to copy (default 60)")
     m.set_defaults(func=cmd_mirror)
+
+    at = sub.add_parser("attachments", help="import important email attachments into the Second Brain")
+    at.add_argument("--days", type=int, help="look back this many days (default from the rules file, 365)")
+    at.add_argument("--dry-run", action="store_true", help="only list what would be imported")
+    at.add_argument("--no-ingest", action="store_true", help="save to 00 Inbox but don't run the ingest")
+    at.add_argument("--rules", help="rules file (default: attachments.toml at the repo root)")
+    at.set_defaults(func=cmd_attachments)
 
     a = sub.add_parser("auth", help="one-time browser sign-in for Outlook / Microsoft 365 mail and calendar connectors")
     a.add_argument("name", nargs="?", help="connector or account name (default: every enabled Outlook connector)")

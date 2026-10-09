@@ -1,0 +1,24 @@
+# Which email attachments go into the Second Brain. Copy to attachments.toml (gitignored) and edit.
+# An email matches a rule when its sender matches `senders` (a domain or a full address) OR its
+# subject or attachment file name contains one of `keywords`. `inboxes` (connector names from
+# connections.toml) limits a rule to some inboxes. Only PDF and Word files are saved.
+#
+# Preview without saving:  python -m life_dashboard attachments --dry-run   (from 01-life-dashboard)
+
+days = 365                        # how far back the first run looks; later runs only see new mail
+extensions = ["pdf", "docx", "doc"]
+
+[[rules]]
+name = "Contracts and entities"
+senders = ["examplelaw.com"]
+keywords = ["operating agreement", "contract", "lease", "resolution", "deed", "closing"]
+
+[[rules]]
+name = "Insurance"
+senders = ["exampleinsurance.com"]
+keywords = ["policy", "renewal", "certificate of insurance", "declarations"]
+
+[[rules]]
+name = "Work inbox"
+inboxes = ["Work mail"]
+keywords = ["agreement", "financials", "purchase order", "board"]
