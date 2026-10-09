@@ -68,6 +68,11 @@ python -m second_brain ingest sample_inbox --vault /tmp/sb --dry-run
 python -m second_brain reminders --vault /tmp/sb --days 120 --today 2026-10-03
 ```
 
+### Folders that sync to your Mac (OneDrive, Google Drive, Dropbox)
+List them in `watch_folders.txt` at the repo root (gitignored; copy `watch_folders.example.txt`), one per line.
+`python -m second_brain watch` files anything new from them and leaves the originals in place; already-filed
+files are skipped by content hash. The setup wizard runs it daily before the morning dashboard.
+
 ### What ingest does, per file
 1. **Extracts text**: txt/md/csv/json/eml, HTML, `.docx` (stdlib zip/xml), PDF (when `pypdf` is installed; otherwise the PDF is linked with a warning). Images and other binaries are linked but not read.
 2. **Classifies** the file into `lease | insurance | contract | client | finance | health | vehicle | note | other` and picks the vault folder.

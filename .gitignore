@@ -7,3 +7,4 @@ connections.toml.bak
 setup.local.toml
 .venv/
 attachments.toml
+watch_folders.txt

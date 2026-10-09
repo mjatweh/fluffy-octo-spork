@@ -1,0 +1,11 @@
+# Folders synced to this Mac whose documents should be filed into the Second Brain.
+# Copy to watch_folders.txt (gitignored). One folder per line; ~ and * work; # starts a comment.
+# Run `python -m second_brain watch` (from 02-second-brain) or let the daily job do it.
+# Originals stay where they are; files already in the vault are skipped.
+
+# OneDrive / SharePoint (OneDrive app -> Sync, or "Add shortcut to My files"):
+# ~/Library/CloudStorage/OneDrive-YourCompany/Attachments
+# ~/Library/CloudStorage/OneDrive-SharedLibraries-YourCompany/Documents/Data Room/Legal
+
+# Google Drive for desktop:
+# ~/Library/CloudStorage/GoogleDrive-you@example.com/My Drive/Contracts

@@ -247,6 +247,8 @@ def schedule_jobs(py: Path, at: str = "07:00") -> list[dict]:
          "workdir": DASHBOARD, "every": 1800},
         {"name": "attachments", "args": [str(py), "-m", "life_dashboard", "attachments"],
          "workdir": DASHBOARD, "hour": (hour - 1) % 24, "minute": minute},
+        {"name": "second-brain-folders", "args": [str(py), "-m", "second_brain", "watch"],
+         "workdir": ROOT / "02-second-brain", "hour": (hour - 1) % 24, "minute": (minute + 20) % 60},
     ]
 
 
