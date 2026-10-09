@@ -200,14 +200,19 @@ def write_connections(answers: dict, vault: Path | None, path: Path | None = Non
     return path
 
 
-def launchd_plist(name: str, args: list[str], workdir: Path, hour: int, minute: int,
-                  weekday: int | None = None) -> bytes:
-    """A LaunchAgent that runs at a time of day. Unlike cron, launchd runs a missed job when the Mac wakes."""
-    when = {"Hour": hour, "Minute": minute, **({"Weekday": weekday} if weekday is not None else {})}
+def launchd_plist(name: str, args: list[str], workdir: Path, hour: int | None = None, minute: int | None = None,
+                  weekday: int | None = None, keep_alive: bool = False) -> bytes:
+    """A LaunchAgent that runs at a time of day. Unlike cron, launchd runs a missed job when the Mac wakes.
+    ``keep_alive`` instead starts it at login and restarts it whenever it crashes (for the Telegram bot)."""
+    if keep_alive:
+        when = {"RunAtLoad": True, "KeepAlive": {"SuccessfulExit": False}, "ThrottleInterval": 30}
+    else:
+        when = {"StartCalendarInterval": {"Hour": hour, "Minute": minute,
+                                          **({"Weekday": weekday} if weekday is not None else {})}}
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     return plistlib.dumps({
         "Label": f"{LABEL}.{name}", "ProgramArguments": args, "WorkingDirectory": str(workdir),
-        "StartCalendarInterval": when,
+        **when,
         "StandardOutPath": str(LOG_DIR / f"{name}.log"), "StandardErrorPath": str(LOG_DIR / f"{name}.log"),
         "EnvironmentVariables": {"PATH": "/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin"},
     })
@@ -225,6 +230,8 @@ def schedule_jobs(py: Path, at: str = "07:00") -> list[dict]:
          "workdir": ea, "hour": 21, "minute": 0},
         {"name": "weekly-review", "args": [str(py), "-m", "exec_assistant", "weekly", "--notify"],
          "workdir": ea, "hour": 18, "minute": 0, "weekday": 0},
+        {"name": "telegram-bot", "args": [str(py), "-m", "life_dashboard", "bot"],
+         "workdir": DASHBOARD, "keep_alive": True},
     ]
 
 
@@ -536,20 +543,23 @@ class Wizard:
     def step_schedule(self) -> None:
         ui = self.ui
         at = self.answers.get("schedule_time", "07:00")
-        header(ui, f"Step 6: Run automatically (dashboard {at}, check-ins 08:00 / 21:00, weekly review Sunday 18:00)")
+        header(ui, f"Step 6: Run automatically (dashboard {at}, check-ins 08:00 / 21:00, weekly review Sunday 18:00,"
+                   " Telegram bot that answers your questions)")
         jobs = schedule_jobs(VENV_PY, at)
         (HOME / ".exec_assistant").mkdir(exist_ok=True)
         if not IS_MAC:
             ui.say("Not a Mac: add these lines with `crontab -e`:")
             for j in jobs:
                 dow = j.get("weekday", "*")
-                ui.say(f"{j['minute']} {j['hour']} * * {dow} cd {j['workdir']} && {' '.join(j['args'])} >> {LOG_DIR}/{j['name']}.log 2>&1")
+                when = "@reboot" if j.get("keep_alive") else f"{j['minute']} {j['hour']} * * {dow}"
+                ui.say(f"{when} cd {j['workdir']} && {' '.join(j['args'])} >> {LOG_DIR}/{j['name']}.log 2>&1")
             return
         LAUNCH_AGENTS.mkdir(parents=True, exist_ok=True)
         for j in jobs:
             path = LAUNCH_AGENTS / f"{LABEL}.{j['name']}.plist"
             subprocess.run(["launchctl", "unload", str(path)], capture_output=True)
-            path.write_bytes(launchd_plist(j["name"], j["args"], j["workdir"], j["hour"], j["minute"], j.get("weekday")))
+            path.write_bytes(launchd_plist(j["name"], j["args"], j["workdir"], j.get("hour"), j.get("minute"),
+                                           j.get("weekday"), j.get("keep_alive", False)))
             r = subprocess.run(["launchctl", "load", str(path)], capture_output=True, text=True)
             ui.say(f"  ✔ {j['name']}" if r.returncode == 0 else f"  ✘ {j['name']}: {(r.stderr or r.stdout).strip()}")
         h, m = (int(x) for x in at.split(":"))

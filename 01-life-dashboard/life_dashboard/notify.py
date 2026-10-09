@@ -55,8 +55,8 @@ def _post(url: str, payload: dict, timeout: float = 15) -> dict:
         return {}
 
 
-def telegram_call(token: str, method: str, payload: dict | None = None) -> dict:
-    data = _post(TELEGRAM_API.format(token=token, method=method), payload or {})
+def telegram_call(token: str, method: str, payload: dict | None = None, timeout: float = 15) -> dict:
+    data = _post(TELEGRAM_API.format(token=token, method=method), payload or {}, timeout=timeout)
     if data and not data.get("ok", True):
         raise NotifyError(f"Telegram: {data.get('description', 'request failed')}")
     return data
