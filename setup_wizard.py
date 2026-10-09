@@ -245,6 +245,8 @@ def schedule_jobs(py: Path, at: str = "07:00") -> list[dict]:
          "workdir": DASHBOARD, "keep_alive": True},
         {"name": "calendar-copy", "args": [str(py), "-m", "life_dashboard", "mirror"],
          "workdir": DASHBOARD, "every": 1800},
+        {"name": "attachments", "args": [str(py), "-m", "life_dashboard", "attachments"],
+         "workdir": DASHBOARD, "hour": (hour - 1) % 24, "minute": minute},
     ]
 
 

@@ -37,6 +37,8 @@ What keeps it running:
   Second Brain, never sends or changes anything, and answers only you. It answers while the Mac is awake.
 - **iCloud calendar copied to Google Calendar** every 30 minutes (`--only google`), so the Claude app on your
   phone can see it too.
+- **Important email attachments filed into the Second Brain** daily (contracts, policies, reports), by the
+  rules in `attachments.toml` (copy `attachments.example.toml`).
 - `python3 setup_wizard.py --check` tests every connection, the schedules, the vault and Telegram, and
   prints a fix for anything wrong. `--update` pulls the latest code and re-checks. `--only <step>`
   re-runs one step (`claude`, `vault`, `accounts`, `telegram`, `google`, `schedule`, `build`).
