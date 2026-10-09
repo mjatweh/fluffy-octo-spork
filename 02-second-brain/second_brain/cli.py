@@ -5,6 +5,7 @@ import argparse
 import datetime as dt
 import json
 import sys
+from pathlib import Path
 
 from . import agent_api, config
 
@@ -33,6 +34,10 @@ def build_parser() -> argparse.ArgumentParser:
     g.add_argument("--move", dest="move", action="store_true", default=None, help="delete originals after ingest")
     g.add_argument("--keep", dest="move", action="store_false", help="keep originals in the drop folder")
     s.add_argument("--json", action="store_true")
+
+    s = sub.add_parser("watch", parents=[vp], help="ingest new files from the synced folders in watch_folders.txt")
+    s.add_argument("--list", default=None, help="folder list (default: watch_folders.txt at the repo root)")
+    s.add_argument("--dry-run", "--offline", dest="dry_run", action="store_true")
 
     s = sub.add_parser("index", parents=[vp], help="(re)build the local search index")
     s.add_argument("--force", action="store_true", help="rebuild from scratch")
@@ -92,6 +97,28 @@ def main(argv: list[str] | None = None) -> int:
             counts = {s: sum(r["status"] == s for r in results) for s in ("ingested", "skipped", "error")}
             print(f"Done: {counts['ingested']} ingested, {counts['skipped']} skipped, {counts['error']} errors.")
         return 1 if any(r["status"] == "error" for r in results) else 0
+    if args.cmd == "watch":
+        from .ingest import ingest
+        from .watch import WATCH_FILE, folders
+
+        listed = folders(Path(args.list) if args.list else WATCH_FILE)
+        if not listed:
+            print(f"No folders listed in {args.list or WATCH_FILE}; nothing to do.")
+            return 0
+        failed = False
+        for folder in listed:
+            if not folder.is_dir():
+                print(f"✘ not found (is it synced to this Mac?): {folder}", file=sys.stderr)
+                failed = True
+                continue
+            results = ingest(folder, vault, dry_run=args.dry_run, move=False, log=lambda m: None)
+            new = [r for r in results if r["status"] == "ingested"]
+            errors = [r for r in results if r["status"] == "error"]
+            print(f"{folder}: {len(new)} new, {len(errors)} errors")
+            for r in errors:
+                print(f"  ✘ {r['file']}: {r['error']}", file=sys.stderr)
+            failed |= bool(errors)
+        return 1 if failed else 0
     if args.cmd == "index":
         from .index import refresh
 

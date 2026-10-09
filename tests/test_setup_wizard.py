@@ -63,7 +63,8 @@ def test_launchd_plist_and_jobs(tmp_path, monkeypatch):
     monkeypatch.setattr(sw, "LOG_DIR", tmp_path / "logs")
     jobs = sw.schedule_jobs(Path("/venv/python"), "06:30")
     assert [j["name"] for j in jobs] == ["dashboard", "checkin-morning", "checkin-evening", "weekly-review",
-                                         "telegram-bot", "calendar-copy", "attachments"]
+                                         "telegram-bot", "calendar-copy", "attachments",
+                                         "second-brain-folders"]
     assert jobs[0]["hour"] == 6 and jobs[0]["minute"] == 30 and "--notify" in jobs[0]["args"]
     plist = plistlib.loads(sw.launchd_plist("weekly-review", jobs[3]["args"], jobs[3]["workdir"], 18, 0, 0))
     assert plist["Label"] == "com.life-assistant.weekly-review"
