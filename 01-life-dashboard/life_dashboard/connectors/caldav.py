@@ -116,13 +116,25 @@ class CalDAVCalendar(Connector):
         return found
 
     def fetch(self, day: date) -> list[Event]:
-        start = datetime.combine(day, time(), self.config.tz).astimezone(timezone.utc)
-        rng = {k: v.strftime("%Y%m%dT%H%M%SZ") for k, v in {"start": start, "end": start + timedelta(days=1)}.items()}
+        return self.fetch_days(day, 1)
+
+    def fetch_days(self, first: date, days: int) -> list[Event]:
+        """Events from ``first`` for ``days`` days, with one query per calendar. An event that spans
+        several days is returned once."""
+        start = datetime.combine(first, time(), self.config.tz).astimezone(timezone.utc)
+        rng = {k: v.strftime("%Y%m%dT%H%M%SZ") for k, v in {"start": start, "end": start + timedelta(days=days)}.items()}
         events: list[Event] = []
+        seen: set[tuple] = set()
         for href, cal_name in self.calendars():
             _, reply = self._send(href, "REPORT", QUERY.format(**rng), "1")
             for ics in calendar_data(reply):
-                events.extend(events_for_day(ics, day, self.config.tz, source=f"{self.name}: {cal_name}"))
+                for offset in range(days):
+                    for ev in events_for_day(ics, first + timedelta(days=offset), self.config.tz,
+                                             source=f"{self.name}: {cal_name}"):
+                        key = (ev.title, ev.start, ev.end)
+                        if key not in seen:
+                            seen.add(key)
+                            events.append(ev)
         return events
 
 

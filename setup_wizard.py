@@ -70,7 +70,7 @@ ICLOUD_DRIVE = HOME / "Library/Mobile Documents/com~apple~CloudDocs"
 LAUNCH_AGENTS = HOME / "Library/LaunchAgents"
 LOG_DIR = HOME / "Library/Logs/life-assistant" if IS_MAC else HOME / ".life-assistant/logs"
 LABEL = "com.life-assistant"
-STEPS = ["python", "claude", "vault", "accounts", "telegram", "schedule", "build"]
+STEPS = ["python", "claude", "vault", "accounts", "telegram", "google", "schedule", "build"]
 
 IMAP_HOSTS = {"gmail": "imap.gmail.com", "icloud": "imap.mail.me.com", "yahoo": "imap.mail.yahoo.com"}
 HELP = {
@@ -101,6 +101,15 @@ HELP = {
 5. Left menu: API permissions -> Add a permission -> Microsoft Graph -> Delegated ->
    tick Mail.Read and Calendars.Read -> Add permissions.
    (If your company blocks this, its IT admin has to click "Grant admin consent".)""",
+    "google": """Copy your iCloud calendar into Google Calendar so the Claude app can see it (one time, ~10 min).
+In the browser page that opened (Google Cloud, signed in as {address}):
+1. Top bar: "Select a project" -> New project -> name it Life Assistant -> Create, then select it.
+2. Search bar: "Google Calendar API" -> Enable.
+3. Search bar: "Google Auth Platform" -> Get started -> app name Life Assistant, your email ->
+   Audience: External -> finish. Then left menu Audience -> "Publish app" -> Confirm
+   (otherwise Google signs you out every 7 days).
+4. Left menu Clients -> Create client -> Application type: Desktop app -> name Life Assistant -> Create.
+5. Copy the Client ID and Client secret it shows.""",
     "telegram": """1. On your phone, open Telegram and search for @BotFather.
 2. Send /newbot, pick a name (e.g. "Michael's Assistant") and a username ending in "bot".
 3. BotFather replies with a token like 123456789:AA... Copy it.""",
@@ -201,11 +210,13 @@ def write_connections(answers: dict, vault: Path | None, path: Path | None = Non
 
 
 def launchd_plist(name: str, args: list[str], workdir: Path, hour: int | None = None, minute: int | None = None,
-                  weekday: int | None = None, keep_alive: bool = False) -> bytes:
+                  weekday: int | None = None, keep_alive: bool = False, every: int | None = None) -> bytes:
     """A LaunchAgent that runs at a time of day. Unlike cron, launchd runs a missed job when the Mac wakes.
     ``keep_alive`` instead starts it at login and restarts it whenever it crashes (for the Telegram bot)."""
     if keep_alive:
         when = {"RunAtLoad": True, "KeepAlive": {"SuccessfulExit": False}, "ThrottleInterval": 30}
+    elif every:
+        when = {"RunAtLoad": True, "StartInterval": every}
     else:
         when = {"StartCalendarInterval": {"Hour": hour, "Minute": minute,
                                           **({"Weekday": weekday} if weekday is not None else {})}}
@@ -232,6 +243,8 @@ def schedule_jobs(py: Path, at: str = "07:00") -> list[dict]:
          "workdir": ea, "hour": 18, "minute": 0, "weekday": 0},
         {"name": "telegram-bot", "args": [str(py), "-m", "life_dashboard", "bot"],
          "workdir": DASHBOARD, "keep_alive": True},
+        {"name": "calendar-copy", "args": [str(py), "-m", "life_dashboard", "mirror"],
+         "workdir": DASHBOARD, "every": 1800},
     ]
 
 
@@ -543,7 +556,7 @@ class Wizard:
     def step_schedule(self) -> None:
         ui = self.ui
         at = self.answers.get("schedule_time", "07:00")
-        header(ui, f"Step 6: Run automatically (dashboard {at}, check-ins 08:00 / 21:00, weekly review Sunday 18:00,"
+        header(ui, f"Step 7: Run automatically (dashboard {at}, check-ins 08:00 / 21:00, weekly review Sunday 18:00,"
                    " Telegram bot that answers your questions)")
         jobs = schedule_jobs(VENV_PY, at)
         (HOME / ".exec_assistant").mkdir(exist_ok=True)
@@ -551,7 +564,8 @@ class Wizard:
             ui.say("Not a Mac: add these lines with `crontab -e`:")
             for j in jobs:
                 dow = j.get("weekday", "*")
-                when = "@reboot" if j.get("keep_alive") else f"{j['minute']} {j['hour']} * * {dow}"
+                when = ("@reboot" if j.get("keep_alive") else "*/30 * * * *" if j.get("every")
+                        else f"{j['minute']} {j['hour']} * * {dow}")
                 ui.say(f"{when} cd {j['workdir']} && {' '.join(j['args'])} >> {LOG_DIR}/{j['name']}.log 2>&1")
             return
         LAUNCH_AGENTS.mkdir(parents=True, exist_ok=True)
@@ -559,7 +573,7 @@ class Wizard:
             path = LAUNCH_AGENTS / f"{LABEL}.{j['name']}.plist"
             subprocess.run(["launchctl", "unload", str(path)], capture_output=True)
             path.write_bytes(launchd_plist(j["name"], j["args"], j["workdir"], j.get("hour"), j.get("minute"),
-                                           j.get("weekday"), j.get("keep_alive", False)))
+                                           j.get("weekday"), j.get("keep_alive", False), j.get("every")))
             r = subprocess.run(["launchctl", "load", str(path)], capture_output=True, text=True)
             ui.say(f"  ✔ {j['name']}" if r.returncode == 0 else f"  ✘ {j['name']}: {(r.stderr or r.stdout).strip()}")
         h, m = (int(x) for x in at.split(":"))
@@ -568,9 +582,41 @@ class Wizard:
             subprocess.run(["sudo", "pmset", "repeat", "wakeorpoweron", "MTWRFSU", wake])
         ui.say(f"Logs: {LOG_DIR}")
 
-    # 7
+    def step_google(self) -> None:
+        ui = self.ui
+        header(ui, "Step 6: Copy your iCloud calendar into Google Calendar (so the Claude app sees it)")
+        if not any(c.get("provider") == "icloud" for c in self.answers.get("calendar", [])):
+            ui.say("No iCloud calendar set up, so there's nothing to copy. Skipping.")
+            return
+        address = next((e["address"] for e in self.answers.get("email", []) if e.get("provider") == "gmail"
+                        and e.get("group", "").lower() == "personal"), "the Google account the Claude app uses")
+        if not (self.env.get("GOOGLE_CLIENT_ID") and self.env.get("GOOGLE_CLIENT_SECRET")) or not ui.yes(
+                "Google app details are already saved. Keep them?"):
+            ui.say(HELP["google"].format(address=address))
+            open_url("https://console.cloud.google.com/projectcreate")
+            client_id = ui.ask("Paste the Client ID")
+            secret = ui.secret("Paste the Client secret")
+            if not (client_id and secret):
+                ui.say("  Skipped.")
+                return
+            self.save_env(GOOGLE_CLIENT_ID=client_id, GOOGLE_CLIENT_SECRET=secret)
+        ui.say(f"\nNow sign in as {address} in the browser and click Continue / Allow."
+               "\n(If Google says the app isn't verified: Advanced -> Go to Life Assistant. It's your own app.)")
+        while True:
+            r = subprocess.run([str(VENV_PY), "-m", "life_dashboard", "mirror", "auth"], cwd=DASHBOARD)
+            if r.returncode == 0:
+                r = subprocess.run([str(VENV_PY), "-m", "life_dashboard", "mirror"], cwd=DASHBOARD,
+                                   capture_output=True, text=True)
+                ui.say(f"  {'✔' if r.returncode == 0 else '✘'} {(r.stdout or r.stderr).strip()}")
+                if r.returncode == 0:
+                    ui.say("  It now updates every 30 minutes (installed by the schedule step).")
+                    return
+            if ui.choose("What now?", ["Try again", "Skip for now"]) == 1:
+                return
+
+    # 8
     def step_build(self) -> None:
-        header(self.ui, "Step 7: First real dashboard")
+        header(self.ui, "Step 8: First real dashboard")
         r = subprocess.run([str(VENV_PY), "-m", "life_dashboard", "build", "-q", "--notify"], cwd=DASHBOARD,
                            capture_output=True, text=True)
         self.ui.say(r.stderr.strip())
@@ -648,6 +694,9 @@ def check(ui: UI | None = None) -> int:
             line(False, f"Telegram: {exc}", "python3 setup_wizard.py --only telegram")
     else:
         line(False, "Telegram not set up (no phone alerts)", "python3 setup_wizard.py --only telegram")
+    if env.get("GOOGLE_CLIENT_ID"):
+        signed_in = (HOME / ".config" / "life-dashboard" / "google-calendar.json").is_file()
+        line(signed_in, "Google Calendar copy signed in", "python3 setup_wizard.py --only google")
     if IS_MAC:
         loaded = subprocess.run(["launchctl", "list"], capture_output=True, text=True).stdout
         for j in schedule_jobs(VENV_PY):

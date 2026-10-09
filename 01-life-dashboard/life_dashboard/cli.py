@@ -1,4 +1,4 @@
-"""Command line: ``python -m life_dashboard {build,serve,schedule,sources,telegram,bot,auth}``."""
+"""Command line: ``python -m life_dashboard {build,serve,schedule,sources,telegram,bot,mirror,auth}``."""
 from __future__ import annotations
 
 import argparse
@@ -181,6 +181,43 @@ def cmd_bot(args) -> int:
     return 0
 
 
+def cmd_mirror(args) -> int:
+    """Copy one calendar (default: the first iCloud one) into a Google calendar the Claude app can read."""
+    from datetime import datetime
+
+    from .connectors import ConnectorError, build_connector
+    from .google_calendar import GoogleCalendar, GoogleError, mirror
+
+    try:
+        google = GoogleCalendar.from_env()
+        if args.action == "auth":
+            google.login()
+            print("Signed in to Google.")
+            return 0
+        if not google.signed_in:
+            print("Not signed in to Google yet; run: python -m life_dashboard mirror auth")
+            return 0  # nothing to do yet; exit cleanly for the scheduler
+        cfg = load_config(args.config)
+        sources = [c for c in cfg.connectors if c.get("type") in ("icloud", "caldav")]
+        if args.source:
+            sources = [c for c in sources if c.get("name") == args.source]
+        if not sources:
+            print(f"No iCloud/CalDAV calendar{f' named {args.source!r}' if args.source else ''} in the config.",
+                  file=sys.stderr)
+            return 1
+        source = build_connector(sources[0], cfg)
+        start = datetime.now(cfg.tz).date()
+        events = source.fetch_days(start, args.days)
+        tz_name = cfg.timezone or "UTC"
+        name = args.calendar or f"{source.name} (copy)"
+        added, removed = mirror(events, google, name, tz_name, start, args.days)
+        print(f"{name}: {len(events)} events in the next {args.days} days ({added} added, {removed} removed).")
+        return 0
+    except (GoogleError, ConnectorError) as exc:
+        print(f"Calendar copy failed: {exc}", file=sys.stderr)
+        return 1
+
+
 def main(argv: list[str] | None = None) -> int:
     load_dotenv(Path.cwd() / ".env")
     load_dotenv(PROJECT_DIR / ".env")
@@ -220,6 +257,14 @@ def main(argv: list[str] | None = None) -> int:
     bt = sub.add_parser("bot", help="answer questions sent to your Telegram bot (runs until stopped)")
     bt.add_argument("--once", action="store_true", help="answer waiting messages, then exit")
     bt.set_defaults(func=cmd_bot)
+
+    m = sub.add_parser("mirror", help="copy an iCloud calendar into Google Calendar so the Claude app can read it")
+    m.add_argument("action", nargs="?", choices=["sync", "auth"], default="sync",
+                   help="sync (default) or auth (one-time Google sign-in)")
+    m.add_argument("--source", help="connector name to copy (default: the first iCloud/CalDAV calendar)")
+    m.add_argument("--calendar", help='Google calendar name (default: "<source> (copy)")')
+    m.add_argument("--days", type=int, default=60, help="how many days ahead to copy (default 60)")
+    m.set_defaults(func=cmd_mirror)
 
     a = sub.add_parser("auth", help="one-time browser sign-in for Outlook / Microsoft 365 mail and calendar connectors")
     a.add_argument("name", nargs="?", help="connector or account name (default: every enabled Outlook connector)")
