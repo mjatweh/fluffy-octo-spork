@@ -47,6 +47,7 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--offline", action="store_true", help="plan without Claude (aliases only)")
     s.add_argument("--from", dest="sources", action="append", metavar="FOLDER",
                    help="sort this folder instead of the layout's sources (repeatable), e.g. the To Sort folder")
+    s.add_argument("--deep", action="store_true", help="read more of each file and think harder (slower; for a second pass)")
 
     s = sub.add_parser("index", parents=[vp], help="(re)build the local search index")
     s.add_argument("--force", action="store_true", help="rebuild from scratch")
@@ -89,7 +90,7 @@ def _organize(args) -> int:
         if args.sources:
             layout.sources = [Path(os.path.expanduser(f)) for f in args.sources]
         client = None if args.offline else org.default_client()
-        rows = org.plan(layout, client)
+        rows = org.plan(layout, client, deep=args.deep)
         org.write_plan(rows, plan_file)
         print(f"\nWhere files would go:\n{org.summary(rows, layout)}")
         print(f"\nFull plan (open in Numbers/Excel; edit destination_folder to change a file, delete a row to "

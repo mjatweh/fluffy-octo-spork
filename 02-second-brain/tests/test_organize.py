@@ -157,3 +157,16 @@ def test_resort_the_to_sort_folder(setup, monkeypatch, tmp_path):
     rows = org.read_plan(todo / "_organize-plan.csv")
     assert [Path(r["source"]).name for r in rows] == ["Laffoday deed.txt"]
     assert "3480 Lakemont" in rows[0]["destination_folder"]
+
+
+def test_deep_plan_uses_more_text_and_effort(setup, fake_client, monkeypatch):
+    layout, _, _, _ = setup
+    seen = []
+
+    def reply(kw):
+        seen.append(kw["output_config"]["effort"])
+        return {"files": []}
+
+    monkeypatch.setattr(org, "excerpt", lambda p, chars=org.EXCERPT_CHARS: str(chars))
+    org.plan(layout, fake_client(reply), log=lambda m: None, files=org.candidates(layout), deep=True)
+    assert seen == ["medium"]
