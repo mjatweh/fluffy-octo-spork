@@ -39,6 +39,12 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--list", default=None, help="folder list (default: watch_folders.txt at the repo root)")
     s.add_argument("--dry-run", "--offline", dest="dry_run", action="store_true")
 
+    s = sub.add_parser("organize", help="sort loose files into your company / property folder tree")
+    s.add_argument("action", choices=["init", "plan", "apply", "undo"])
+    s.add_argument("--layout", help="layout file (default: file_layout.toml at the repo root)")
+    s.add_argument("--plan-file", help="plan CSV (default: <destination>/00 To Sort/_organize-plan.csv)")
+    s.add_argument("--offline", action="store_true", help="plan without Claude (aliases only)")
+
     s = sub.add_parser("index", parents=[vp], help="(re)build the local search index")
     s.add_argument("--force", action="store_true", help="rebuild from scratch")
 
@@ -63,6 +69,39 @@ def build_parser() -> argparse.ArgumentParser:
     return ap
 
 
+def _organize(args) -> int:
+    from . import organize as org
+
+    try:
+        layout = org.load_layout(Path(args.layout) if args.layout else org.LAYOUT_FILE)
+    except FileNotFoundError as e:
+        print(e, file=sys.stderr)
+        return 2
+    plan_file = Path(args.plan_file) if args.plan_file else layout.destination / layout.unsorted / "_organize-plan.csv"
+    undo_log = org.STATE_DIR / "undo.jsonl"
+    if args.action == "init":
+        print(f"Created {org.init_tree(layout)} folders under {layout.destination}")
+        return 0
+    if args.action == "plan":
+        client = None if args.offline else org.default_client()
+        rows = org.plan(layout, client)
+        org.write_plan(rows, plan_file)
+        print(f"\nWhere files would go:\n{org.summary(rows, layout)}")
+        print(f"\nFull plan (open in Numbers/Excel; edit destination_folder to change a file, delete a row to "
+              f"leave it where it is):\n{plan_file}\nNothing has moved yet. When happy: organize apply")
+        return 0
+    if args.action == "apply":
+        if not plan_file.is_file():
+            print(f"No plan at {plan_file}; run: organize plan", file=sys.stderr)
+            return 2
+        org.apply(org.read_plan(plan_file), undo_log)
+        plan_file.rename(plan_file.with_name(f"_organize-plan-applied-{dt.datetime.now():%Y%m%d-%H%M}.csv"))
+        print("To put everything back: organize undo")
+        return 0
+    org.undo(undo_log)
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     vault = config.vault_path(getattr(args, "vault", None))
@@ -77,6 +116,8 @@ def main(argv: list[str] | None = None) -> int:
     if args.cmd == "tools":
         print(json.dumps(agent_api.TOOLS, indent=2))
         return 0
+    if args.cmd == "organize":
+        return _organize(args)
     if args.cmd == "mcp":
         from .mcp_server import main as mcp_main
 

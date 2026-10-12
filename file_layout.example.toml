@@ -1,0 +1,34 @@
+# Your folder tree for `python -m second_brain organize`. Copy to file_layout.toml (gitignored) and edit.
+# Each [[entity]] becomes <destination>/<category>/<name>/<subfolder>. Aliases (names, LLCs,
+# addresses, email domains) help match files to the right entity.
+
+destination = "~/Library/Mobile Documents/com~apple~CloudDocs/Files"   # iCloud Drive -> Files
+sources = ["~/Downloads", "~/Desktop", "~/Documents"]
+unsorted = "00 To Sort"
+include_images = false   # true also sorts photos and scans (jpg/png/heic)
+
+subfolders = ["01 Legal & Corporate", "02 Accounting", "03 Financials & Reporting", "04 Tax",
+              "05 Insurance", "06 Banking & Loans", "07 Contracts & Vendors", "08 Correspondence"]
+# extra folders for entities with property = true
+property_subfolders = ["10 Acquisition & Closing", "11 Construction", "12 Leasing & Tenants",
+                       "13 Property Management"]
+
+[[entity]]
+category = "1 Tech"
+name = "Example Software Co"
+aliases = ["example software", "examplesoft.com"]
+
+[[entity]]
+category = "2 Real Estate"
+name = "12 Oak Street"
+aliases = ["12 oak", "oak street llc"]
+property = true
+
+[[entity]]
+category = "5 Personal"
+subfolders = ["Insurance", "Taxes", "Banking & Investing", "Vehicles", "Health", "Home", "IDs & Documents"]
+
+[[entity]]
+category = "9 Archive"
+name = "Old Company (sold)"
+aliases = ["old company"]
