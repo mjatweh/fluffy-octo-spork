@@ -8,3 +8,4 @@ setup.local.toml
 .venv/
 attachments.toml
 watch_folders.txt
+file_layout.toml

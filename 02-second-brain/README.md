@@ -68,6 +68,14 @@ python -m second_brain ingest sample_inbox --vault /tmp/sb --dry-run
 python -m second_brain reminders --vault /tmp/sb --days 120 --today 2026-10-03
 ```
 
+### Organize your files into one folder tree
+`python -m second_brain organize init | plan | apply | undo` sorts loose files (Downloads, Desktop, Documents)
+into `<category>/<company or property>/<subfolder>`, as laid out in `file_layout.toml` at the repo root
+(gitignored; copy `file_layout.example.toml`). `plan` asks Claude where each file belongs (offline: aliases
+only) and writes a CSV you can review and edit; low-confidence files go to `00 To Sort`. Nothing moves until
+`apply`, which logs every move so `undo` can put them all back. Add the destination to `watch_folders.txt`
+to have the Second Brain file them too.
+
 ### Folders that sync to your Mac (OneDrive, Google Drive, Dropbox)
 List them in `watch_folders.txt` at the repo root (gitignored; copy `watch_folders.example.txt`), one per line.
 `python -m second_brain watch` files anything new from them and leaves the originals in place; already-filed
