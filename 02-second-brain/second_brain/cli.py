@@ -91,6 +91,11 @@ def _organize(args) -> int:
             layout.sources = [Path(os.path.expanduser(f)) for f in args.sources]
         client = None if args.offline else org.default_client()
         rows = org.plan(layout, client, deep=args.deep)
+        if not rows:
+            print("Nothing to sort; the existing plan (if any) was left as it is.")
+            return 0
+        if plan_file.is_file():  # never lose an earlier plan that hasn't been applied
+            plan_file.rename(plan_file.with_name(f"_organize-plan-previous-{dt.datetime.now():%Y%m%d-%H%M%S}.csv"))
         org.write_plan(rows, plan_file)
         print(f"\nWhere files would go:\n{org.summary(rows, layout)}")
         print(f"\nFull plan (open in Numbers/Excel; edit destination_folder to change a file, delete a row to "
