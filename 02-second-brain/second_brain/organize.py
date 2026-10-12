@@ -122,9 +122,10 @@ def candidates(layout: Layout) -> list[Path]:
     for src in layout.sources:
         if not src.is_dir():
             continue
+        inside = src.resolve() == dest or dest in src.resolve().parents  # e.g. re-sorting "00 TO SORT"
         for dirpath, dirnames, filenames in os.walk(src):
             here = Path(dirpath)
-            if here.resolve() == dest or dest in here.resolve().parents:
+            if not inside and (here.resolve() == dest or dest in here.resolve().parents):
                 dirnames[:] = []
                 continue
             # skip hidden folders, app bundles, code projects and library-like folders
@@ -132,7 +133,7 @@ def candidates(layout: Layout) -> list[Path]:
                            and not d.endswith((".app", ".photoslibrary", ".pages", ".numbers", ".key"))
                            and not (here / d / ".git").exists()]
             for name in filenames:
-                if name.startswith((".", "~$")) or name.rsplit(".", 1)[-1].lower() not in exts:
+                if (name.startswith((".", "~$", "_organize-plan")) or name.rsplit(".", 1)[-1].lower() not in exts):
                     continue
                 out.append(here / name)
             # Pages/Numbers/Keynote packages are folders: treat them as files

@@ -144,3 +144,16 @@ extra_subfolders = ["02 CONTRACTS & LEGAL/HR & EMPLOYMENT"]
     org.init_tree(layout)
     assert (tmp_path / "Files/1 REAL ESTATE/GATEWAY (MT HOLLY)/MOB (GATEWAY CENTER ONE)/01 CONSTRUCTION").is_dir()
     assert (tmp_path / "Files/1 REAL ESTATE/LVNT/02 CONTRACTS & LEGAL/HR & EMPLOYMENT").is_dir()
+
+
+def test_resort_the_to_sort_folder(setup, monkeypatch, tmp_path):
+    monkeypatch.setattr(org, "STATE_DIR", tmp_path / "state")
+    layout, layout_file, src, dest = setup
+    todo = dest / "00 To Sort"
+    todo.mkdir(parents=True)
+    (todo / "Laffoday deed.txt").write_text("deed")
+    (todo / "_organize-plan.csv").write_text("x")
+    assert main(["organize", "plan", "--layout", str(layout_file), "--offline", "--from", str(todo)]) == 0
+    rows = org.read_plan(todo / "_organize-plan.csv")
+    assert [Path(r["source"]).name for r in rows] == ["Laffoday deed.txt"]
+    assert "3480 Lakemont" in rows[0]["destination_folder"]
