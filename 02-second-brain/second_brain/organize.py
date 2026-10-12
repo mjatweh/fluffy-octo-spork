@@ -86,9 +86,16 @@ def load_layout(path: Path = LAYOUT_FILE) -> Layout:
         raw = tomllib.load(fh)
     standard = list(raw.get("subfolders", []))
     extras = list(raw.get("property_subfolders", []))
+    per_category = {k: list(v) for k, v in raw.get("category_subfolders", {}).items()}
     entities = []
     for e in raw.get("entity", []):
-        subs = list(e["subfolders"]) if "subfolders" in e else standard + (extras if e.get("property") else [])
+        if "subfolders" in e:
+            subs = list(e["subfolders"])
+        elif e["category"] in per_category:
+            subs = list(per_category[e["category"]])
+        else:
+            subs = standard + (extras if e.get("property") else [])
+        subs += [s for s in e.get("extra_subfolders", []) if s not in subs]
         entities.append(Entity(e["category"], e.get("name", ""), [a.lower() for a in e.get("aliases", [])],
                                subs, e.get("note", "")))
     return Layout(_expand(raw["destination"]), [_expand(s) for s in raw.get("sources", [])],

@@ -119,3 +119,28 @@ def test_cli_roundtrip(setup, capsys, monkeypatch, tmp_path):
 
 def test_missing_layout(tmp_path, capsys):
     assert main(["organize", "plan", "--layout", str(tmp_path / "none.toml")]) == 2
+
+
+def test_category_folder_sets_and_nesting(tmp_path):
+    f = tmp_path / "layout.toml"
+    f.write_text(f"""
+destination = "{tmp_path / 'Files'}"
+[category_subfolders]
+"1 REAL ESTATE" = ["01 CONSTRUCTION", "02 CONTRACTS & LEGAL"]
+
+[[entity]]
+category = "1 REAL ESTATE"
+name = "GATEWAY (MT HOLLY)/MOB (GATEWAY CENTER ONE)"
+
+[[entity]]
+category = "1 REAL ESTATE"
+name = "LVNT"
+extra_subfolders = ["02 CONTRACTS & LEGAL/HR & EMPLOYMENT"]
+""")
+    layout = org.load_layout(f)
+    mob = layout.entity("1 REAL ESTATE/GATEWAY (MT HOLLY)/MOB (GATEWAY CENTER ONE)")
+    assert mob.subfolders == ["01 CONSTRUCTION", "02 CONTRACTS & LEGAL"]
+    assert layout.entity("1 REAL ESTATE/LVNT").subfolders[-1] == "02 CONTRACTS & LEGAL/HR & EMPLOYMENT"
+    org.init_tree(layout)
+    assert (tmp_path / "Files/1 REAL ESTATE/GATEWAY (MT HOLLY)/MOB (GATEWAY CENTER ONE)/01 CONSTRUCTION").is_dir()
+    assert (tmp_path / "Files/1 REAL ESTATE/LVNT/02 CONTRACTS & LEGAL/HR & EMPLOYMENT").is_dir()
