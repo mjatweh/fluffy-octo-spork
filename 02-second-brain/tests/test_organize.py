@@ -170,3 +170,16 @@ def test_deep_plan_uses_more_text_and_effort(setup, fake_client, monkeypatch):
     monkeypatch.setattr(org, "excerpt", lambda p, chars=org.EXCERPT_CHARS: str(chars))
     org.plan(layout, fake_client(reply), log=lambda m: None, files=org.candidates(layout), deep=True)
     assert seen == ["medium"]
+
+
+def test_new_plan_never_overwrites_old_one(setup, capsys, tmp_path):
+    layout, layout_file, src, dest = setup
+    assert main(["organize", "plan", "--layout", str(layout_file), "--offline"]) == 0
+    plan_file = dest / "00 To Sort" / "_organize-plan.csv"
+    first = plan_file.read_text()
+    empty = tmp_path / "empty"
+    empty.mkdir()
+    assert main(["organize", "plan", "--layout", str(layout_file), "--offline", "--from", str(empty)]) == 0
+    assert plan_file.read_text() == first  # empty run leaves the plan alone
+    assert main(["organize", "plan", "--layout", str(layout_file), "--offline"]) == 0
+    assert len(list((dest / "00 To Sort").glob("_organize-plan-previous-*.csv"))) == 1
