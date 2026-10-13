@@ -183,3 +183,42 @@ def test_new_plan_never_overwrites_old_one(setup, capsys, tmp_path):
     assert plan_file.read_text() == first  # empty run leaves the plan alone
     assert main(["organize", "plan", "--layout", str(layout_file), "--offline"]) == 0
     assert len(list((dest / "00 To Sort").glob("_organize-plan-previous-*.csv"))) == 1
+
+
+def test_sensitive_and_recent_files_are_never_touched(setup):
+    import os, time
+    layout, _, src, _ = setup
+    (src / "Chrome Passwords.csv").write_text("x")
+    (src / "recovery-codes.txt").write_text("x")
+    (src / "github-recovery-codes.txt").write_text("x")
+    names = {p.name for p in org.candidates(layout)}
+    assert not names & {"Chrome Passwords.csv", "recovery-codes.txt", "github-recovery-codes.txt"}
+    old = time.time() - 3 * 86400
+    for p in src.rglob("*.txt"):
+        os.utime(p, (old, old))
+    (src / "Lakemont fresh.txt").write_text("just downloaded")
+    names = {p.name for p in org.candidates(layout, min_age_hours=24)}
+    assert "Lakemont fresh.txt" not in names and "random.txt" in names
+
+
+def test_auto_moves_with_its_own_undo_log(setup, monkeypatch, tmp_path, capsys):
+    import os, time
+    monkeypatch.setattr(org, "STATE_DIR", tmp_path / "state")
+    layout, layout_file, src, dest = setup
+    old = time.time() - 3 * 86400
+    for p in src.rglob("*.txt"):
+        os.utime(p, (old, old))
+    assert main(["organize", "auto", "--layout", str(layout_file), "--offline"]) == 0
+    out = capsys.readouterr().out
+    assert "Sorted 3 files (1 into 00 To Sort)" in out
+    assert (dest / "00 To Sort" / "random.txt").exists()
+    logs = list((tmp_path / "state").glob("undo-auto-*.jsonl"))
+    assert len(logs) == 1 and list((dest / "00 To Sort").glob("_organize-auto-*.csv"))
+    assert main(["organize", "auto", "--layout", str(layout_file), "--offline"]) == 0
+    assert "Nothing new to sort" in capsys.readouterr().out
+    assert main(["organize", "undo", "--layout", str(layout_file), "--log", str(logs[0])]) == 0
+    assert (src / "random.txt").exists()
+
+
+def test_auto_without_layout_is_quiet(tmp_path):
+    assert main(["organize", "auto", "--layout", str(tmp_path / "none.toml")]) == 0
