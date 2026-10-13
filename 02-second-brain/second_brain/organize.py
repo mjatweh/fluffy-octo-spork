@@ -44,6 +44,9 @@ SKIP_DIRS = {"node_modules", ".git", "__pycache__", ".venv", "venv", "Applicatio
 BATCH = 15
 EXCERPT_CHARS = 1500
 UNSURE = "unsure"
+# Never moved (or read) by the organizer: secrets belong in a password manager, not a folder tree.
+SENSITIVE = re.compile(r"passwords?|passwd|passcodes?|recovery[ _-]?codes?|backup[ _-]?codes?|seed[ _-]?phrase|"
+                       r"private[ _-]?key|secret[ _-]?key|\b2fa\b|\btotp\b|\.(kdbx|pem|p12|pfx)$", re.I)
 
 
 @dataclass
@@ -115,7 +118,12 @@ def init_tree(layout: Layout) -> int:
 
 # -- finding files ---------------------------------------------------------------------------------
 
-def candidates(layout: Layout) -> list[Path]:
+def candidates(layout: Layout, min_age_hours: float = 0) -> list[Path]:
+    """Files to sort. Skips secrets (SENSITIVE) and, with ``min_age_hours``, files changed recently
+    (still being worked on)."""
+    import time
+
+    cutoff = time.time() - min_age_hours * 3600
     exts = DOC_EXTENSIONS | (IMAGE_EXTENSIONS if layout.include_images else set())
     dest = layout.destination.resolve()
     out = []
@@ -133,8 +141,15 @@ def candidates(layout: Layout) -> list[Path]:
                            and not d.endswith((".app", ".photoslibrary", ".pages", ".numbers", ".key"))
                            and not (here / d / ".git").exists()]
             for name in filenames:
-                if (name.startswith((".", "~$", "_organize-plan")) or name.rsplit(".", 1)[-1].lower() not in exts):
+                if (name.startswith((".", "~$", "_organize")) or name.rsplit(".", 1)[-1].lower() not in exts
+                        or SENSITIVE.search(name)):
                     continue
+                if min_age_hours:
+                    try:
+                        if (here / name).stat().st_mtime > cutoff:
+                            continue
+                    except OSError:
+                        continue
                 out.append(here / name)
             # Pages/Numbers/Keynote packages are folders: treat them as files
             for d in os.listdir(here) if here.is_dir() else []:
@@ -268,10 +283,10 @@ PLAN_FIELDS = ["source", "destination_folder", "entity", "subfolder", "confidenc
 
 
 def plan(layout: Layout, client=None, log: Callable[[str], None] = print,
-         files: Iterable[Path] | None = None, deep: bool = False) -> list[dict]:
+         files: Iterable[Path] | None = None, deep: bool = False, min_age_hours: float = 0) -> list[dict]:
     """deep: read more of each file, think harder, smaller batches (for a second pass on To Sort)."""
     size, chars, effort = (5, 6000, "medium") if deep else (BATCH, EXCERPT_CHARS, "low")
-    files = list(files) if files is not None else candidates(layout)
+    files = list(files) if files is not None else candidates(layout, min_age_hours)
     log(f"{len(files)} files to sort.")
     rows: list[dict] = []
     for start in range(0, len(files), size):
@@ -364,3 +379,20 @@ def default_client():
     from .llm import get_client
 
     return get_client()
+
+
+def auto(layout: Layout, client=None, min_age_hours: float = 24, log: Callable[[str], None] = print) -> tuple[int, int]:
+    """Plan and move in one go (for the daily job). Unclear files go to the To Sort folder, files changed
+    in the last ``min_age_hours`` are left alone, and each run has its own undo log and plan record.
+    Returns ``(moved, left_in_to_sort)``."""
+    rows = plan(layout, client, log=lambda m: None, min_age_hours=min_age_hours)
+    if not rows:
+        log("Nothing new to sort.")
+        return 0, 0
+    stamp = dt.datetime.now().strftime("%Y%m%d-%H%M")
+    write_plan(rows, layout.destination / layout.unsorted / f"_organize-auto-{stamp}.csv")
+    moved, _ = apply(rows, STATE_DIR / f"undo-auto-{stamp}.jsonl", log=lambda m: None)
+    unsure = sum(1 for r in rows if Path(r["destination_folder"]) == layout.destination / layout.unsorted)
+    log(f"Sorted {moved} files ({unsure} into {layout.unsorted}).\n{summary(rows, layout)}\n"
+        f"Undo this run: organize undo --log {STATE_DIR / f'undo-auto-{stamp}.jsonl'}")
+    return moved, unsure

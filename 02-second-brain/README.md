@@ -74,7 +74,9 @@ into `<category>/<company or property>/<subfolder>`, as laid out in `file_layout
 (gitignored; copy `file_layout.example.toml`). `plan` asks Claude where each file belongs (offline: aliases
 only) and writes a CSV you can review and edit; low-confidence files go to `00 To Sort`. Nothing moves until
 `apply`, which logs every move so `undo` can put them all back. Add the destination to `watch_folders.txt`
-to have the Second Brain file them too.
+to have the Second Brain file them too. `organize auto` plans and moves in one go for files older than 24 hours
+(the setup wizard runs it daily; each run has its own undo log). Files whose names look like secrets
+(passwords, recovery codes, keys) are never moved or read.
 
 ### Folders that sync to your Mac (OneDrive, Google Drive, Dropbox)
 List them in `watch_folders.txt` at the repo root (gitignored; copy `watch_folders.example.txt`), one per line.

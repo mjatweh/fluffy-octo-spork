@@ -64,7 +64,7 @@ def test_launchd_plist_and_jobs(tmp_path, monkeypatch):
     jobs = sw.schedule_jobs(Path("/venv/python"), "06:30")
     assert [j["name"] for j in jobs] == ["dashboard", "checkin-morning", "checkin-evening", "weekly-review",
                                          "telegram-bot", "calendar-copy", "attachments",
-                                         "second-brain-folders"]
+                                         "second-brain-folders", "organize-files"]
     assert jobs[0]["hour"] == 6 and jobs[0]["minute"] == 30 and "--notify" in jobs[0]["args"]
     plist = plistlib.loads(sw.launchd_plist("weekly-review", jobs[3]["args"], jobs[3]["workdir"], 18, 0, 0))
     assert plist["Label"] == "com.life-assistant.weekly-review"
@@ -76,6 +76,7 @@ def test_launchd_plist_and_jobs(tmp_path, monkeypatch):
     copy = plistlib.loads(sw.launchd_plist("calendar-copy", jobs[5]["args"], jobs[5]["workdir"], every=1800))
     assert copy["StartInterval"] == 1800 and copy["ProgramArguments"][-1] == "mirror"
     assert jobs[6]["hour"] == 5 and jobs[6]["minute"] == 30  # an hour before the dashboard
+    assert (jobs[8]["hour"], jobs[8]["minute"]) == (5, 15)  # sort files before the Second Brain reads them
 
 
 def test_test_connector_reports_failures_kindly(tmp_path, monkeypatch):

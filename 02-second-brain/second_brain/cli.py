@@ -41,12 +41,16 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--dry-run", "--offline", dest="dry_run", action="store_true")
 
     s = sub.add_parser("organize", help="sort loose files into your company / property folder tree")
-    s.add_argument("action", choices=["init", "plan", "apply", "undo"])
+    s.add_argument("action", choices=["init", "plan", "apply", "undo", "auto"],
+                   help="auto = plan + apply in one go for new files (the daily job)")
     s.add_argument("--layout", help="layout file (default: file_layout.toml at the repo root)")
     s.add_argument("--plan-file", help="plan CSV (default: <destination>/00 To Sort/_organize-plan.csv)")
     s.add_argument("--offline", action="store_true", help="plan without Claude (aliases only)")
     s.add_argument("--from", dest="sources", action="append", metavar="FOLDER",
                    help="sort this folder instead of the layout's sources (repeatable), e.g. the To Sort folder")
+    s.add_argument("--min-age-hours", type=float, default=24,
+                   help="auto: leave files changed in the last N hours alone (default 24)")
+    s.add_argument("--log", help="undo: the undo log to reverse (default: the last manual apply)")
     s.add_argument("--deep", action="store_true", help="read more of each file and think harder (slower; for a second pass)")
 
     s = sub.add_parser("index", parents=[vp], help="(re)build the local search index")
@@ -80,7 +84,7 @@ def _organize(args) -> int:
         layout = org.load_layout(Path(args.layout) if args.layout else org.LAYOUT_FILE)
     except FileNotFoundError as e:
         print(e, file=sys.stderr)
-        return 2
+        return 0 if args.action == "auto" else 2  # the daily job stays quiet until a layout exists
     plan_file = Path(args.plan_file) if args.plan_file else layout.destination / layout.unsorted / "_organize-plan.csv"
     undo_log = org.STATE_DIR / "undo.jsonl"
     if args.action == "init":
@@ -109,7 +113,10 @@ def _organize(args) -> int:
         plan_file.rename(plan_file.with_name(f"_organize-plan-applied-{dt.datetime.now():%Y%m%d-%H%M}.csv"))
         print("To put everything back: organize undo")
         return 0
-    org.undo(undo_log)
+    if args.action == "auto":
+        org.auto(layout, None if args.offline else org.default_client(), args.min_age_hours)
+        return 0
+    org.undo(Path(args.log) if args.log else undo_log)
     return 0
 
 
