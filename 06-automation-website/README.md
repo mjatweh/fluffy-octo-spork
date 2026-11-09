@@ -1,39 +1,28 @@
-# Automation website (LVNT AI)
+# LVNT AI website
 
-Three pages, plain HTML/CSS/JS. No build step, nothing to install.
+Black and neon-green, box-grid design. Three pages: `index.html` (home), `services.html`, `about.html`.
+Plain HTML/CSS/JS: no install, no build needed to view it.
 
-| File | What it is |
-|---|---|
-| `index.html` | Home: hero, "sound familiar?" checklist, cost calculator, services, before/after, case study, how it works, FAQ, booking |
-| `services.html` | Ten services in detail, industries, tools we connect, process |
-| `about.html` | Company story (no individual bios), values, fit check |
-| `assets/config.js` | **The only file you normally edit**: email and Calendly link |
-| `assets/styles.css`, `assets/main.js` | Design and animations |
+## Turn on Calendly (5 minutes)
 
-## Turn on Calendly (2 minutes)
+1. Go to https://calendly.com/signup and choose **Sign up with Google** using `michael.atweh@lvnt.ai`.
+2. Connect that Google calendar when asked.
+3. Create an event: **One-on-One**, name "AI Automation Call", **30 min**, location **Google Meet** (or phone).
+4. Copy the event link (e.g. `https://calendly.com/michael-atweh/ai-automation-call`).
+5. Paste it into `assets/config.js` → `calendlyUrl: "..."` and save/commit.
 
-1. Sign up at https://calendly.com with `michael.atweh@lvnt.ai` and connect that calendar.
-2. Create a 30-minute event called "Free automation call". Copy its link.
-3. Paste it into `assets/config.js` → `calendlyUrl: "https://calendly.com/..."`.
-
-Until then every "Book a call" button opens a pre-filled email to you, so nothing looks broken.
-
-## See it on your computer
-
-Double-click `index.html`, or run `python3 -m http.server` in this folder and open http://localhost:8000.
+That's it: every "Book a call" button then opens Calendly in a pop-up, and the booking box at the bottom of each
+page shows your live calendar in the site's colors. Until then, those buttons open a pre-filled email to you.
 
 ## Put it online
 
-**GitHub Pages (free, already wired up):** repo Settings → Pages → Source: **GitHub Actions**. Every change merged to
-`main` publishes automatically (`.github/workflows/website.yml`). Your address will be
-`https://mjatweh.github.io/fluffy-octo-spork/`. To use your own domain (e.g. `lvnt.ai` or a new one), add it under
-Settings → Pages → Custom domain and follow the DNS steps shown there.
+Repo **Settings → Pages → Source: GitHub Actions**, then merge to `master`. It publishes automatically
+(`.github/workflows/website.yml`) to `https://mjatweh.github.io/fluffy-octo-spork/`. Add your own domain under
+Settings → Pages → Custom domain.
 
-**Netlify (alternative):** drag this folder onto https://app.netlify.com/drop.
+## Editing
 
-## Changing things
-
-- **Brand name**: search-and-replace `LVNT` across the three `.html` files.
-- **Text**: edit the `.html` files directly; every section has a comment like `<!-- CASE STUDY -->`.
-- **Colors**: top of `assets/styles.css` (`--orange`, `--blue`, `--sun`, ...).
-- **Case study**: on the home page, anonymized ("an industrial finishing company in the Carolinas"). Get the client's OK before naming them, and add real numbers (hours saved, etc.) once you have them.
+- Email and Calendly: `assets/config.js`.
+- Colors: top of `assets/styles.css` (`--neon`, `--bg`).
+- Text: the pages are generated from `_src/build.py` (shared header, footer and booking box). Edit the text there,
+  then run `python3 _src/build.py .` from this folder. Small one-off text edits can also go straight into the `.html`.
