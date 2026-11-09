@@ -11,7 +11,7 @@ mode (bundled sample data, no API key needed). With `ANTHROPIC_API_KEY` set they
 | 3 | [`03-executive-assistant`](03-executive-assistant/) | Morning check-in and evening review every day; weekly rollup of what to keep / stop / start | `python -m exec_assistant seed-demo && python -m exec_assistant weekly --dry-run` |
 | 4 | [`04-content-marketing-agent`](04-content-marketing-agent/) | Knows your brand and ICP; writes social posts, newsletters, landing pages, ads, content calendars; reviews drafts for brand voice | `python -m content_agent generate linkedin --topic "AI for small firms" --dry-run` |
 | 5 | [`05-ai-workforce`](05-ai-workforce/) | A team of specialist agents led by an AI chief of staff that plans, delegates in parallel, reviews and reports, with approval gates for side effects. Includes a deal analyst (screening memos, pipeline tracker, investor one-pagers) and a trading analyst (analysis only, never trades) | `python -m workforce run "Plan next week's content and outreach" --dry-run` |
-| 6 | [`06-automation-website`](06-automation-website/) | Marketing website for the AI automation business (Home, Services, About, Calendly booking) plus a launch and marketing plan; publishes to GitHub Pages | open `06-automation-website/index.html` |
+| 6 | [`06-automation-website`](06-automation-website/) | TailorWired website (custom AI automation; Home, Services, About, Calendly booking) plus launch plan and ready-to-post launch kit; publishes to GitHub Pages | open `06-automation-website/index.html` |
 
 Run each command from inside its project folder.
 

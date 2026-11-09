@@ -1,4 +1,6 @@
-# LVNT AI: launch and marketing plan
+# TailorWired: launch and marketing plan
+
+> Ready-to-post copy for launch (profiles, posts, outreach, first newsletter) is in [`LAUNCH-KIT.md`](LAUNCH-KIT.md).
 
 Built with the content marketing agent (`04-content-marketing-agent`) after loading it with this business's brand,
 target customer, offers and content themes (`04-content-marketing-agent/brand/`).
@@ -58,7 +60,7 @@ software. We connect to what they have. That's the AFC story, and it's what sets
 > Quick favor. I've been helping established businesses use AI on their back office without switching their
 > software. For one manufacturer we connected AI to their existing QuickBooks Desktop instead of the costly move
 > to QuickBooks Online their IT company recommended. Do you know an owner who's drowning in paperwork or data entry?
-> Happy to give them a free 30-minute call, no pitch. https://mjatweh.github.io/fluffy-octo-spork/
+> Happy to give them a free 30-minute call, no pitch. https://tailorwired.com
 
 ### Referral partner email (CPAs, IT companies, bankers)
 > Subject: A resource for your clients who are still doing everything by hand
@@ -87,7 +89,7 @@ software. We connect to what they have. That's the AFC story, and it's what sets
 > the office.
 >
 > Our site has a 1-minute calculator that shows what that typing costs you a year:
-> https://mjatweh.github.io/fluffy-octo-spork/#cost
+> https://tailorwired.com/#cost
 >
 > Worth a 30-minute call?
 >
@@ -126,7 +128,7 @@ Send at most two follow-ups, a week apart. Include a real mailing address and an
 > Two or more? That's not a people problem. It's a connection problem. And it's usually cheaper to fix than you'd
 > think.
 >
-> I put a 1-minute calculator on our site that shows what it costs you a year: https://mjatweh.github.io/fluffy-octo-spork/#cost
+> I put a 1-minute calculator on our site that shows what it costs you a year: https://tailorwired.com/#cost
 
 **Post 3: the reassurance (Friday)**
 > "My people aren't technical."

@@ -1,10 +1,11 @@
 # Content Pillars
 
-## Keep Your Systems, Lose the Busywork
-Proof that you don't have to throw out software you trust to use AI. Before/after stories built on QuickBooks Desktop, Outlook, Excel and old industry programs. This is our core difference and the strongest hook for established owners.
+## Tailored, Not Off-the-Shelf
+Proof that automation should fit the business, not the other way around: custom-built on the software owners already trust (QuickBooks Desktop, Outlook, Excel, old industry programs). This is TailorWired's core difference and the strongest hook for established owners.
 - We connected AI to QuickBooks Desktop instead of forcing a migration
 - Your old software isn't the problem; the gaps between programs are
 - What "integration" actually means, in plain English
+- Why off-the-shelf AI tools don't fit businesses like yours
 - Three signs your programs should be talking to each other
 
 ## AI in Plain English

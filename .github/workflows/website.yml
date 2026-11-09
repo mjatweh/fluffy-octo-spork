@@ -22,8 +22,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
+      - name: Collect only the public site files
+        run: |
+          mkdir _site
+          rsync -a --exclude '*.md' --exclude '_src' --exclude 'marketing' 06-automation-website/ _site/
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: 06-automation-website
+          path: _site
       - id: deployment
         uses: actions/deploy-pages@v4

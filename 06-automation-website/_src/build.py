@@ -40,7 +40,7 @@ def head(title, desc, cur):
 <a class="skip" href="#main">Skip to content</a>
 <header class="site-header">
   <div class="wrap">
-    <a class="logo" href="index.html"><span class="logo-mark"><i></i></span><span>LVNT<span class="neon">.AI</span></span></a>
+    <a class="logo" href="index.html"><span class="logo-mark"><i></i></span><span>Tailor<span class="neon">Wired</span></span></a>
     <button class="nav-toggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
     <nav class="nav" aria-label="Main">{nav}<a class="btn" href="#book" data-book>Book a call</a></nav>
   </div>
@@ -73,9 +73,9 @@ def foot():
     return '''
 <footer class="site-footer">
   <div class="wrap foot">
-    <a class="logo" href="index.html"><span class="logo-mark"><i></i></span><span>LVNT<span class="neon">.AI</span></span></a>
+    <a class="logo" href="index.html"><span class="logo-mark"><i></i></span><span>Tailor<span class="neon">Wired</span></span></a>
     <nav aria-label="Footer"><a href="index.html">Home</a><a href="services.html">Services</a><a href="about.html">About</a><a href="#book" data-book>Book a call</a><a data-email href="#">email</a></nav>
-    <span class="mono" style="font-size:.85rem">© <span data-year></span> LVNT AI · Custom AI automation</span>
+    <span class="mono" style="font-size:.85rem">© <span data-year></span> TailorWired · Custom AI automation</span>
   </div>
 </footer>
 <div class="sticky-cta"><a class="btn btn-lg" href="#book" data-book>Book a free call <span class="arr">→</span></a></div>
@@ -191,7 +191,7 @@ home = f'''
     <div class="bento">
       <div class="box s6 reveal"><span class="k">// off-the-shelf software</span><h3>You adapt to the tool.</h3>
         <ul class="ticks bad"><li>Switch systems and migrate years of data</li><li>Retrain the whole team</li><li>Pay for features you'll never use</li><li>Still miss the steps that make you different</li></ul></div>
-      <div class="box s6 neon-box reveal d1"><span class="k">// LVNT custom automation</span><h3>The automation adapts to you.</h3>
+      <div class="box s6 neon-box reveal d1"><span class="k">// TailorWired automation</span><h3>The automation adapts to you.</h3>
         <ul class="ticks"><li>Built on the systems you already have</li><li>Your team keeps working the way they know</li><li>Designed around your exact rules and steps</li><li>Grows with you, one workflow at a time</li></ul></div>
     </div>
   </div>
@@ -250,7 +250,7 @@ home = f'''
   </div>
 </section>
 '''
-page("index.html", "LVNT AI | Custom AI Automation for Your Business",
+page("index.html", "TailorWired | Custom AI Automation, Built Around Your Business",
      "Custom AI automation built around your business and the systems you already use. Invoices, data entry, inbox, reports, documents and more. Book a free call.", home)
 
 # ───────── SERVICES ─────────
@@ -302,7 +302,7 @@ services = f'''
   </div>
 </section>
 '''
-page("services.html", "Services | LVNT AI Custom Automation",
+page("services.html", "Services | TailorWired Custom AI Automation",
      "Custom AI automation and integration: finance, systems integration, AI assistants, documents, inbox, sales, reporting, operations and custom AI agents.", services)
 
 # ───────── ABOUT ─────────
@@ -311,7 +311,7 @@ about = f'''
   <div class="wrap">
     <span class="tag"><span class="dot"></span>About</span>
     <h1>We build AI that <span class="glow">fits the business.</span></h1>
-    <p class="lead" style="color:var(--muted);font-size:1.2rem;max-width:60ch">LVNT AI is a team of operators and engineers. We design and build custom AI automations for companies that want the benefits of AI without changing how they run.</p>
+    <p class="lead" style="color:var(--muted);font-size:1.2rem;max-width:60ch">TailorWired designs and builds custom AI automations, tailored to how each business works and wired into the systems it already runs on.</p>
   </div>
 </section>
 <section style="padding-top:20px">
@@ -319,7 +319,7 @@ about = f'''
     <div class="bento">
       <div class="box s7 reveal"><span class="k">// our story</span><h3>Built inside real businesses first.</h3>
         <p>We started by automating operations inside a group of companies across manufacturing, real estate, hospitality and technology. Every one of them ran differently, and every vendor said the same thing: switch your systems.</p>
-        <p>So we did the opposite: kept the systems people trusted, connected them, and put AI on the repetitive work in between. That approach became LVNT AI.</p></div>
+        <p>So we did the opposite: kept the systems people trusted, connected them, and put AI on the repetitive work in between. That approach became TailorWired: automation tailored to you, wired into what you have.</p></div>
       <div class="box s5 neon-box reveal d1"><span class="k">// our belief</span><h2 style="font-size:clamp(1.8rem,3.4vw,2.8rem)">Technology should fit your business. Not the other way around.</h2></div>
       <div class="box s4 reveal"><div class="ico">{ICON["puzzle"]}</div><h3>Custom, always</h3><p>No templates. Every build starts from how you actually work.</p></div>
       <div class="box s4 reveal d1"><div class="ico">{ICON["link"]}</div><h3>Your systems stay</h3><p>We connect to what you already run before suggesting anything new.</p></div>
@@ -338,5 +338,5 @@ about = f'''
   </div>
 </section>
 '''
-page("about.html", "About | LVNT AI", "LVNT AI designs and builds custom AI automations that fit how your business already works.", about)
+page("about.html", "About | TailorWired", "TailorWired designs and builds custom AI automations that fit how your business already works.", about)
 print("built")

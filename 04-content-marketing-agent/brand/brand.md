@@ -1,10 +1,10 @@
 # Brand
 
 ## Business Name
-LVNT AI
+TailorWired
 
 ## Mission
-We help established, owner-led businesses keep up with how the world is moving. We connect the software they already use and put AI to work on the repetitive office jobs, so their people get hours back every week, without ripping out the systems they trust.
+TailorWired builds custom AI automation: tailored to how each business works, wired into the systems it already runs on. We help established, owner-led businesses keep up with how the world is moving. We connect the software they already use and put AI to work on the repetitive office jobs, so their people get hours back every week, without ripping out the systems they trust.
 
 ## Offer
 AI automation and systems integration for businesses that have been around for decades: accounting and back-office automation (QuickBooks Desktop and Online, Sage), connecting systems that don't talk to each other, AI assistants that answer questions from the company's own data, document processing, inbox and follow-up automation, reporting, custom AI agents, plus training and ongoing support. Entry point is a free 30-minute call, then a fixed-price plan, one workflow at a time.
@@ -25,6 +25,9 @@ AI automation and systems integration for businesses that have been around for d
 - one step at a time
 - busywork
 - keep up
+- custom-built
+- tailored to you
+- wired into your systems
 
 ## Words We Avoid
 - revolutionize — overpromises
