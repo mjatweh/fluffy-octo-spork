@@ -1,0 +1,11 @@
+# Netlify hosting for the TailorWired site (06-automation-website).
+# Publishes only the public pages; the marketing plan and build script stay private.
+[build]
+  command = "rm -rf _site && mkdir _site && cp -r 06-automation-website/*.html 06-automation-website/assets _site/"
+  publish = "_site"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    Referrer-Policy = "strict-origin-when-cross-origin"
